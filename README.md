@@ -1,22 +1,22 @@
 # NodeDesignDDBSPrototype
 
 ```markdown
-#Flask Healthcare API
+## Flask Healthcare API
 
 This is a Flask-based RESTful API for managing healthcare data including patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 
-#Features
+## Features
 
 - Create, read, update, and delete operations for patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 - Data replication across multiple nodes in the network.
 - SQLite database backend.
 
-#Installation
+## Installation
 
 1. Clone the repository:
 
 ```bash
-git clone <repository_url>
+git clone https://github.com/KabeloLebitsa/NodeDesignDDBSPrototype.git
 ```
 
 2. Install dependencies:
