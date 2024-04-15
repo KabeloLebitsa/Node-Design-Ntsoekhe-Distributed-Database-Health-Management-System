@@ -1,4 +1,4 @@
-# NodeDesignDDBSPrototype
+# Node Design DDBS Prototype
 
 ```markdown
 ## Flask Healthcare API
