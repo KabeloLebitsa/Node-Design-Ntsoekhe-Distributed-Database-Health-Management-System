@@ -10,7 +10,6 @@ This is a Flask-based RESTful API for managing healthcare data including patient
 
 ## Installation
 
-
 1. Clone the repository:
 
 ```bash
