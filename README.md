@@ -1,7 +1,5 @@
-# Node Design DDBS Prototype
-
 ```markdown
-## Flask Healthcare API
+Flask Healthcare API
 
 This is a Flask-based RESTful API for managing healthcare data including patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 
