@@ -1,0 +1,30 @@
+version: '3'
+networks:
+  my_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.254  # Change the gateway IP address
+          ip_range: 172.18.0.0/24
+
+services:
+  my_app1:
+    image: sqlite_api
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+    networks:
+      my_network:
+        ipv4_address: 172.18.0.2
+
+  my_app2:
+    image: sqlite_api
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+    networks:
+      my_network:
+        ipv4_address: 172.18.0.3
