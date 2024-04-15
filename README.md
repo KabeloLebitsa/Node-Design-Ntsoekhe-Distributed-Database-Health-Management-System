@@ -1,20 +1,17 @@
 # NodeDesignDDBSPrototype
 
-
-Here's a basic README.md file for your Flask application:
-
 ```markdown
-# Flask Healthcare API
+#Flask Healthcare API
 
 This is a Flask-based RESTful API for managing healthcare data including patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 
-## Features
+#Features
 
 - Create, read, update, and delete operations for patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 - Data replication across multiple nodes in the network.
 - SQLite database backend.
 
-## Installation
+#Installation
 
 1. Clone the repository:
 
