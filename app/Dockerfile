@@ -13,12 +13,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your SQLite database file into the container
-COPY ntsoekhe.db .
-
-# Copy the application code into the container
-COPY app.py .
-COPY create_patient.html .
-
+COPY . .
 # Expose the port on which the API will run
 #EXPOSE 80
 
