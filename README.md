@@ -1,4 +1,4 @@
-```markdown
+
 Flask Healthcare API
 
 This is a Flask-based RESTful API for managing healthcare data including patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
@@ -10,6 +10,7 @@ This is a Flask-based RESTful API for managing healthcare data including patient
 - SQLite database backend.
 
 ## Installation
+
 
 1. Clone the repository:
 
