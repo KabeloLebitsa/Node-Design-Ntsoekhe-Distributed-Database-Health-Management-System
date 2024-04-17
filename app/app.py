@@ -1,17 +1,21 @@
 from flask import Flask, jsonify, request,render_template
 import sqlite3
 import requests
-import os
+import os   
 import json
+from ntsoekheCreation import create_database
 app = Flask(__name__)
-
+create_database()
 # List of other nodes in the network
-OTHER_NODES = ['http://172.17.0.2:8081','http://172.17.0.3:8082']
+OTHER_NODES = ['http://172.18.0.4:8083','http://172.18.0.3:8082','http://172.18.0.2:8081','http://172.18.0.5:8084','http://172.18.0.6:8085']
 PORT = int(os.environ.get('PORT', 8081))
 # Endpoint for the home page
 @app.route('/')
 def index():
-    return render_template('create_patient.html')
+    return render_template('welcomePoe.html')
+@app.route('/options')
+def theOptions():
+    return render_template('options.html')
 
 @app.route('/patients/create', methods=['GET'])
 def create_patient_form():
@@ -27,8 +31,8 @@ def replicate_patient():
     cursor = conn.cursor()
 
     # Insert the replicated patient into the database
-    cursor.execute('INSERT INTO patients (PatientID, Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?, ?)',
-               (replicated_data['PatientID'], replicated_data['Name'], replicated_data['DateOfBirth'], replicated_data['Gender'], replicated_data['ContactInformation'], replicated_data['InsuranceInformation']))
+    cursor.execute('INSERT INTO patients (Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?)',
+               ( replicated_data['Name'], replicated_data['DateOfBirth'], replicated_data['Gender'], replicated_data['ContactInformation'], replicated_data['InsuranceInformation']))
 
     conn.commit()
 
@@ -41,9 +45,10 @@ def replicate_patient():
 # Endpoint for creating a new patient
 @app.route('/patients', methods=['POST'])
 def create_patient():  
-
-    patient_data=request.get_json()
-    # broadcast data to all the nodes inclusive of self 
+    # Get the patient data from the request body
+    patient_data = request.get_json()
+    
+     # Send patient data to other nodes including self
     for node in OTHER_NODES:
         try:
 
@@ -55,6 +60,7 @@ def create_patient():
             app.logger.error(f'Error replicating patient to node {node}: {e}')
 
     # Return a response indicating success
+    
     return jsonify({'message': 'patient created successfully'}), 201
 
 
@@ -119,21 +125,45 @@ def delete_patient(patient_id):
 
     # Close the database connection
     conn.close()
-
+    
     # Replicate delete operation to other nodes
     for node in OTHER_NODES:
         try:
-            response = requests.delete(f'{node}/patients/{patient_id}')
+            response = requests.delete(f'{node}/patients/deleteAcross/{patient_id}')
             if response.status_code != 200:
                 app.logger.error(f'Failed to replicate delete operation to node {node}: {response.text}')
         except Exception as e:
             app.logger.error(f'Error replicating delete operation to node {node}: {e}')
-
+    
     # Return a response indicating success
     return jsonify({'message': 'Patient deleted successfully'}), 200
 
+@app.route('/patients/deleteAcross/<int:patient_id>', methods=['DELETE'])
+def delete_every_patient(patient_id):
+    # Connect to the SQLite database
+    conn = sqlite3.connect('ntsoekhe.db')
+    cursor = conn.cursor()
+
+    # Check if the patient exists
+    cursor.execute('SELECT * FROM patients WHERE PatientID = ?', (patient_id,))
+    patient = cursor.fetchone()
+
+    if patient is None:
+        # Close the database connection
+        conn.close()
+        return jsonify({'message': 'Patient not found'}), 404
+
+    # Delete the patient from the database
+    cursor.execute('DELETE FROM patients WHERE PatientID = ?', (patient_id,))
+    conn.commit()
+
+    # Close the database connection
+    conn.close()
+    return jsonify({'message': 'Patient being  deleted across successfully'}), 200
+
 # Endpoint for retrieving all patients
 @app.route('/patients', methods=['GET'])
+
 def get_patients():
     # Connect to the SQLite database
     conn = sqlite3.connect('ntsoekhe.db')
@@ -149,8 +179,9 @@ def get_patients():
     # Convert the patients to a list of dictionaries
     patient_list = [{'PatientID': patient[0], 'Name': patient[1], 'DateOfBirth': patient[2], 'Gender': patient[3], 'ContactInformation': patient[4], 'InsuranceInformation': patient[5]} for patient in patients]
 
-    # Return the patients as JSON
-    return jsonify({'patients': patient_list})
+    # Return the patients as HTML template
+    return render_template('display_patients.html', patients=patient_list)
+
 
 #endpoint for replication
 @app.route('/replicate', methods=['POST'])
