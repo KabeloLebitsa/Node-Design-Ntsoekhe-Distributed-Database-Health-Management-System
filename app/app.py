@@ -1,12 +1,13 @@
+#appy.py
+
 from flask import Flask, render_template, request, jsonify, abort
 from requests import post, delete
-from . import connection_pool, database, celery_worker  # Assuming these are in different files
-from .models import Patient  # Assuming models.py is in the same directory
+from . import connection_pool, database, celery_worker 
+from .models import Patient  
 
 OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
 
 app = Flask(__name__)
-
 
 # Database connection related functions
 def get_connection():

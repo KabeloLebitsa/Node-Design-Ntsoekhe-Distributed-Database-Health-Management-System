@@ -1,3 +1,5 @@
+#celery_worker.py
+
 from celery import Celery
 from .models import Base, Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
 from .database import create_all_tables, get_db, insert_patient, get_all_patients, get_patient_by_id, update_patient

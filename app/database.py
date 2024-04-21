@@ -1,6 +1,7 @@
+#database.py
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from . import models  # Assuming models.py is in the same directory
 from .models import Base, Patient, Doctor
 
 # Define the connection string to your database (replace with your details)
