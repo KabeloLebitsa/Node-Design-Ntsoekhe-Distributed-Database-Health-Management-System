@@ -18,31 +18,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login.html'  # Redirect to login page on unauthorized access
 
-# User loader function for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-# Login route (assuming login logic is implemented in users.py)
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('welcome_page.html'))
-
-    # ... handle login form submission and user authentication
-
-# Logout route
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login.html'))
-
-@app.route('/')
-def index():
-    return render_template('welcome_page.html')
-
-
 @app.route('/patients', methods=['POST'])
 @login_required  # Require login for creating patients
 def create_patient():
@@ -50,9 +25,7 @@ def create_patient():
         return abort(403)  # Forbidden
 
     patient_data = request.get_json()
-    # ... process and validate patient data
 
-    # Use connection pool for database interactions
     with connection_pool.get_connection() as conn:
         cursor = conn.cursor()
         try:
@@ -75,15 +48,22 @@ def create_patient():
             app.logger.error(f'Error creating patient: {e}')
             return jsonify({'message': 'Failed to create patient'}), 500
 
-# ... other API endpoints for retrieving patient data (implement authorization checks as needed)
+# Retrieve a patient by ID
+@app.route('/patients/<int:patient_id>', methods=['GET'])
+@login_required
+def get_patient_by_id(patient_id):
+    if not current_user.can_read_patient:
+        return abort(403)  # Forbidden
+
+    if patient := database.get_patient_by_id(patient_id):
+        return jsonify(patient.serialize()), 200
+    else:
+        return jsonify({'message': f'Patient with ID {patient_id} not found'}), 404  # Not Found
 
 # Endpoint for replication (assuming user has appropriate permissions)
 @app.route('/replicate', methods=['POST'])
 @login_required
 def replicate_patient():
-    if not current_user.can_replicate_data:  # Implement authorization check
-        return abort(403)  # Forbidden
-
     replicated_data = request.get_json()
     # ... process and validate replicated data
 

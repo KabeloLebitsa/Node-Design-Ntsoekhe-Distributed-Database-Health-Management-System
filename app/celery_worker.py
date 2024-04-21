@@ -10,7 +10,6 @@ app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost
 # Optional: Automatically create tables on Celery worker startup
 create_all_tables()
 
-
 @app.task
 def add_patient(patient_data):
     """
