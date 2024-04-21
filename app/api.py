@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, jsonify, abort
 from requests import post, delete
 from . import connection_pool, database, celery_worker  # Assuming these are in different files
-from .models import Patient  # Assuming models.py is in the same directory
-
-OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
+from .models import Patient  # Import Patient class from models.py
 
 app = Flask(__name__)
+
+OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
 
 
 # Database connection related functions
@@ -15,8 +15,8 @@ def get_connection():
 
 def get_patients():
     engine, session = database.create_database_connection()
-    patients = session.query(Patient).all()
-    patient_list = [{'PatientID': patient.PatientID, 'Name': patient.Name, 'DateOfBirth': patient.DateOfBirth.strftime('%Y-%m-%d'),
+    patients = session.query(Patient).all()  # Assuming Patient model is defined elsewhere
+    patient_list = [{'PatientID': patient.PatientID, 'Name': patient.Name, 'DateOfBirth': patient.DateOfBirth,
                      'Gender': patient.Gender, 'ContactInformation': patient.ContactInformation,
                      'InsuranceInformation': patient.InsuranceInformation} for patient in patients]
     return render_template('display_patients.html', patients=patient_list)
@@ -55,36 +55,42 @@ def replicate_patient():
 def create_patient():
     patient_data = request.get_json()
     for node in OTHER_NODES:
-        celery_worker.replicate_patient.delay(node, patient_data)
-    new_patient = Patient(Name=patient_data['Name'], DateOfBirth=patient_data['DateOfBirth'],
-                           Gender=patient_data['Gender'], ContactInformation=patient_data['ContactInformation'],
-                           InsuranceInformation=patient_data['InsuranceInformation'])
-    engine, session = database.create_database_connection()
-    session.add(new_patient)
-    session.commit()
-    session.close()
+        celery_worker.replicate_patient.delay(node, patient_data)  # Using delay for asynchronous task
     return jsonify({'message': 'patient created successfully'}), 201
 
 
 def replicate_patient_to_node(node, patient_data):
-    conn = get_connection()
+    conn = get_connection()  # Assuming get_connection establishes a database connection
     cursor = conn.cursor()
+
+
     cursor.execute('INSERT INTO patients (Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?)',
-                   (patient_data['Name'], patient_data['DateOfBirth'], patient_data['Gender'],
-                    patient_data['ContactInformation'], patient_data['InsuranceInformation']))
-    conn.commit()
-    conn.close()
+                    (patient_data['Name'], patient_data['DateOfBirth'], patient_data['Gender'],
+                     patient_data['ContactInformation'], patient_data['InsuranceInformation']))
+
     try:
-        response = post(f'{node}/replicate', json=patient_data)
-        if response.status_code != 201:
-            app.logger.error(f'Failed to replicate patient to node {node}: {response.text}')
+        _extracted_from_replicate_patient_to_node_12(patient_data, cursor, conn, node)
     except Exception as e:
         app.logger.error(f'Error replicating patient to node {node}: {e}')
+    finally:
+        conn.close()
 
 
-@app.route('/patients/<int:patient_id>', methods=['DELETE'])
-def delete_patient(patient_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM patients WHERE PatientID = ?', (patient_id,))
-    patient = cursor.fetchone()
+def _extracted_from_replicate_patient_to_node_12(patient_data, cursor, conn, node):
+    # Extract patient data from dictionary
+    name = patient_data['Name']
+    date_of_birth = patient_data['DateOfBirth']
+    gender = patient_data['Gender']
+    contact_information = patient_data['ContactInformation']
+    insurance_information = patient_data['InsuranceInformation']
+
+    # Remote database insertion
+    cursor.execute('INSERT INTO patients (Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?)',
+                   (name, date_of_birth, gender, contact_information, insurance_information))
+    conn.commit()
+
+    # Send data to remote node (assuming API endpoint at /replicate)
+    response = post(f'{node}/replicate', json=patient_data)
+    if response.status_code != 201:
+        app.logger.error(f'Failed to replicate patient to node {node}: {response.text}')
+
