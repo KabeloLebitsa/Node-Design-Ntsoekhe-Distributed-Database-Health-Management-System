@@ -5,37 +5,17 @@ from celery import Celery
 import sqlite3
 from flask import Flask, render_template, request, jsonify, abort
 import requests
-from ntsoekheCreation import create_database
-
+import os
+import json
 app = Flask(__name__)
-create_database()
 
-OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
-
-# Create a connection pool
-pool = PooledDB(
-    creator=sqlite3,
-    database='ntsoekhe.db',
-    maxconnections=10,
-    blocking=True
-)
-
-# Create an engine for SQLAlchemy
-engine = create_engine('sqlite:///ntsoekhe.db')
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Create a Celery instance
-celery = Celery(app.name, broker='redis://localhost:6379/0')
-
+# List of other nodes in the network
+OTHER_NODES = ['http://172.17.0.2:8081','http://172.17.0.3:8082']
+PORT = int(os.environ.get('PORT', 8081))
 # Endpoint for the home page
 @app.route('/')
 def index():
-    return render_template('welcome_page.html')
-
-@app.route('/options')
-def the_options():
-    return render_template('options.html')
+    return render_template('create_patient.html')
 
 @app.route('/patients/create', methods=['GET'])
 def create_patient_form():
@@ -47,20 +27,27 @@ def replicate_patient():
     replicated_data = request.get_json()
     conn = pool.connection()
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO patients (Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?)',
-                   (replicated_data['Name'], replicated_data['DateOfBirth'], replicated_data['Gender'], replicated_data['ContactInformation'], replicated_data['InsuranceInformation']))
+
+    # Insert the replicated patient into the database
+    cursor.execute('INSERT INTO patients (PatientID, Name, DateOfBirth, Gender, ContactInformation, InsuranceInformation) VALUES (?, ?, ?, ?, ?, ?)',
+               (replicated_data['PatientID'], replicated_data['Name'], replicated_data['DateOfBirth'], replicated_data['Gender'], replicated_data['ContactInformation'], replicated_data['InsuranceInformation']))
+
     conn.commit()
     conn.close()
     return jsonify({'message': 'patient replicated successfully'}), 201
 
 @app.route('/patients', methods=['POST'])
-def create_patient():
-    patient_data = request.get_json()
+def create_patient():  
+
+    patient_data=request.get_json()
+    # broadcast data to all the nodes inclusive of self 
     for node in OTHER_NODES:
         try:
             celery.send_task('replicate_patient', args=[node, patient_data])
         except Exception as e:
             app.logger.error(f'Error replicating patient to node {node}: {e}')
+
+    # Return a response indicating success
     return jsonify({'message': 'patient created successfully'}), 201
 
 @celery.task
@@ -91,6 +78,8 @@ def delete_patient(patient_id):
     cursor.execute('DELETE FROM patients WHERE PatientID = ?', (patient_id,))
     conn.commit()
     conn.close()
+
+    # Replicate delete operation to other nodes
     for node in OTHER_NODES:
         try:
             response = requests.delete(f'{node}/patients/deleteAcross/{patient_id}')
@@ -98,18 +87,43 @@ def delete_patient(patient_id):
                 app.logger.error(f'Failed to replicate delete operation to node {node}: {response.text}')
         except Exception as e:
             app.logger.error(f'Error replicating delete operation to node {node}: {e}')
+
+    # Return a response indicating success
     return jsonify({'message': 'Patient deleted successfully'}), 200
 
-@app.route('/patients/deleteAcross/<int:patient_id>', methods=['DELETE'])
-def delete_every_patient(patient_id):
-    conn = pool.connection()
+# Endpoint for retrieving all patients
+@app.route('/patients', methods=['GET'])
+def get_patients():
+    # Connect to the SQLite database
+    conn = sqlite3.connect('ntsoekhe.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM patients WHERE PatientID = ?', (patient_id,))
-    patient = cursor.fetchone()
-    if patient is None:
-        conn.close()
-        return jsonify({'message': 'Patient not found'}), 404
-    cursor.execute('DELETE FROM patients WHERE PatientID = ?', (patient_id,))
+
+    # Retrieve all patients from the database
+    cursor.execute('SELECT * FROM patients')
+    patients = cursor.fetchall()
+
+    # Close the database connection
+    conn.close()
+
+    # Convert the patients to a list of dictionaries
+    patient_list = [{'PatientID': patient[0], 'Name': patient[1], 'DateOfBirth': patient[2], 'Gender': patient[3], 'ContactInformation': patient[4], 'InsuranceInformation': patient[5]} for patient in patients]
+
+    # Return the patients as JSON
+    return jsonify({'patients': patient_list})
+
+#endpoint for replication
+@app.route('/replicate', methods=['POST'])
+def replicate_doctor():
+    replicated_data = request.get_json()
+    
+    # Connect to the SQLite database
+    conn = sqlite3.connect('ntsoekhe.db')
+    cursor = conn.cursor()
+
+    # Insert the replicated doctor into the database
+    cursor.execute('INSERT INTO doctors (DoctorID, Name, Specialization, ContactInformation, DepartmentID) VALUES (?, ?, ?, ?, ?)',
+               (replicated_data['DoctorID'], replicated_data['Name'], replicated_data['Specialization'], replicated_data['ContactInformation'], replicated_data['DepartmentID']))
+
     conn.commit()
     conn.close()
     return jsonify({'message': 'Patient being deleted across successfully'}), 200
