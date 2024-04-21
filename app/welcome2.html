@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Ntsoekhe - Your Personal Health Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-3 text-white mb-4">Welcome to Ntsoekhe</h1>
+                <p class="lead text-white mb-4">
+                    Ntsoekhe is your personalized health management system, designed to empower you to take control of your wellbeing. Track your medical history, manage medications, and achieve your health goals - all in one convenient platform.
+                </p>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-lg">
+                    Get Started
+                </a>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{{ url_for('static', filename='images/welcome_hero.jpg') }}" alt="Ntsoekhe Welcome" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Medical History</h5>
+                    <p class="card-text">Keep all your medical records, test results, and visit notes in one secure location.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Medication Tracker</h5>
+                    <p class="card-text">Never miss a dose with our intuitive medication management tools.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Health Goal Setting</h5>
+                    <p class="card-text">Achieve your wellness goals with personalized tracking and progress monitoring.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

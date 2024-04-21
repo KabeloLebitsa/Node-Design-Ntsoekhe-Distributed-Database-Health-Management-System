@@ -1,4 +1,4 @@
-## Flask Healthcare API
+    ## Flask Healthcare API
 
 This is a Flask-based RESTful API for managing healthcare data including patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 
@@ -15,18 +15,8 @@ This is a Flask-based RESTful API for managing healthcare data including patient
 ```bash
 git clone https://github.com/KabeloLebitsa/NodeDesignDDBSPrototype.git
 ```
-
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-
-```bash
-python app.py
-```
+##dependancy 
+yml file takes care of those
 
 ## Usage
 
@@ -74,29 +64,26 @@ python app.py
 - `POST /billings`: Create a new billing.
 - `GET /billings`: Retrieve all billings.
 
-## Docker
+## Running  Docker Applications
 
-You can also run the application using Docker. Dockerfile and docker-compose.yml files are included in the repository.
+you run the application using yml file 
+-it builds the images and containers statically
 
-1. Build the Docker image:
+1. running application:
+    docker-compose up
 
-```bash
-docker-compose build
-```
+the nodes will run at three links
+['http://172.18.0.4:8083','http://172.18.0.3:8082','http://172.18.0.2:8081','http://172.18.0.5:8084','http://172.18.0.6:8085']
+,   this are defined statically in the yml file
 
-2. Run the Docker container:
+NOTE : due to static network address assignments ,  is advisable to remove all existing custom docker networks, to aavoid ip overlap causing malfunction 
 
-```bash
-docker-compose up
-```
-
-The application will be accessible at http://localhost:8081.
 
 ## Database
 
 The SQLite database file `ntsoekhe.db` is included in the repository. It contains tables for patients, doctors, nurses, departments, appointments, medical records, prescriptions, and billings.
 
-## Dependencies
+## Dependencies(they are handled by the yml file )
 
 - Flask
 - Requests
