@@ -1,14 +1,15 @@
 #celery_worker.py
 
+import database 
 from celery import Celery
-from .models import Base, Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
-from .database import create_all_tables, get_db, insert_patient, get_all_patients, get_patient_by_id, update_patient
+from .models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
+ 
 
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
 
 # Optional: Automatically create tables on Celery worker startup
-create_all_tables()
+database.create_all_tables()
 
 @app.task
 def add_patient(patient_data):
@@ -22,8 +23,8 @@ def add_patient(patient_data):
         The ID of the newly inserted patient record.
     """
     patient = Patient(**patient_data)
-    db = get_db()
-    insert_patient(patient)
+    db = database.get_db()
+    database.insert_patient(patient)
     db.close()
     return patient.PatientID
 
@@ -36,8 +37,8 @@ def get_patients():
     Returns:
         A list of Patient objects representing all patients in the database.
     """
-    db = get_db()
-    patients = get_all_patients()
+    db = database.get_db()
+    patients = database.get_all_patients()
     db.close()
     return patients
 
@@ -53,7 +54,7 @@ def get_patient_by_id(patient_id):
     Returns:
         A Patient object representing the retrieved patient or None if not found.
     """
-    db = get_db()
+    db = database.get_db()
     patient = get_patient_by_id(patient_id)
     db.close()
     return patient
@@ -71,10 +72,74 @@ def update_patient(patient_id, new_data):
     Returns:
         The updated Patient object or None if not found.
     """
-    db = get_db()
-    patient = update_patient(patient_id, **new_data)  # Unpack new_data dictionary
+    db = database.get_db()
+    patient = database.update_patient(patient_id, **new_data)  # Unpack new_data dictionary
     db.close()
     return patient
+
+@app.task
+def add_doctor(doctor_data):
+    """
+    Celery task to add a new doctor record to the database.
+
+    Args:
+        doctor_data: A dictionary containing doctor information (name, specialty, etc.).
+
+    Returns:
+        The ID of the newly inserted doctor record.
+    """
+    doctor = Doctor(**doctor_data)
+    db = database.get_db()
+    database.insert_doctor(doctor)
+    db.close()
+    return doctor.DoctorID
+
+@app.task
+def get_doctors():
+    """
+    Celery task to retrieve all doctor records from the database.
+
+    Returns:
+        A list of Doctor objects representing all doctors in the database.
+    """
+    db = database.get_db()
+    doctors = database.get_all_doctors()
+    db.close()
+    return doctors
+
+@app.task
+def get_doctor_by_id(doctor_id):
+    """
+    Celery task to retrieve a specific doctor record based on the ID.
+
+    Args:
+        doctor_id: The ID of the doctor to retrieve.
+
+    Returns:
+        A Doctor object representing the retrieved doctor or None if not found.
+    """
+    db = database.get_db()
+    doctor = database.get_doctor_by_id(doctor_id)
+    db.close()
+    return doctor
+
+@app.task
+def update_doctor(doctor_id, new_data):
+    """
+    Celery task to update a doctor record in the database.
+
+    Args:
+        doctor_id: The ID of the doctor to update.
+        new_data: A dictionary containing the updated doctor information.
+
+    Returns:
+        The updated Doctor object or None if not found.
+    """
+    db = database.get_db()
+    doctor = database.update_doctor(doctor_id, **new_data)
+    db.close()
+    return doctor
+
 
 # Similar tasks for CRUD operations on other models (Doctor, Nurse, etc.)
 # Implement functions for Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing

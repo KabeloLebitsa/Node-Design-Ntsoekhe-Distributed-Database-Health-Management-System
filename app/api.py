@@ -58,7 +58,7 @@ def get_patient_by_id(patient_id):
     else:
         return jsonify({'message': f'Patient with ID {patient_id} not found'}), 404  # Not Found
 
-# Endpoint for replication (assuming user has appropriate permissions)
+# Endpoint for replication
 @app.route('/replicate', methods=['POST'])
 @login_required
 def replicate_patient():
@@ -79,4 +79,43 @@ def replicate_patient():
             app.logger.error(f'Error replicating patient: {e}')
             return jsonify({'message': 'Failed to replicate patient'}), 500
 
-# ... other API endpoints
+@app.route('/patients/<int:patient_id>', methods=['PUT'])
+@login_required
+def update_patient(patient_id):
+    if not current_user.can_update_patient:
+        return abort(403)  # Forbidden
+
+    update_data = request.get_json()
+    with connection_pool.get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('UPDATE patients SET Name = ?, DateOfBirth = ?, Gender = ?, ContactInformation = ?, InsuranceInformation = ? WHERE id = ?',
+                           (update_data['Name'], update_data['DateOfBirth'], update_data['Gender'],
+                            update_data['ContactInformation'], update_data['InsuranceInformation'], patient_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                return jsonify({'message': f'No patient found with ID {patient_id}'}), 404
+            return jsonify({'message': 'Patient updated successfully'}), 200
+        except Exception as e:
+            conn.rollback()
+            app.logger.error(f'Error updating patient: {e}')
+            return jsonify({'message': 'Failed to update patient'}), 500
+
+@app.route('/patients/<int:patient_id>', methods=['DELETE'])
+@login_required
+def delete_patient(patient_id):
+    if not current_user.can_delete_patient:
+        return abort(403)  # Forbidden
+
+    with connection_pool.get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('DELETE FROM patients WHERE id = ?', (patient_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                return jsonify({'message': f'No patient found with ID {patient_id}'}), 404
+            return jsonify({'message': 'Patient deleted successfully'}), 200
+        except Exception as e:
+            conn.rollback()
+            app.logger.error(f'Error deleting patient: {e}')
+            return jsonify({'message': 'Failed to delete patient'}), 500
