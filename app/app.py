@@ -3,7 +3,7 @@
 import users
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from .models import Patient, User  
+from models import Patient, User  
 
 # Application configuration
 app = Flask(__name__)
