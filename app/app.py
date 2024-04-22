@@ -1,6 +1,6 @@
 #app.py
 
-from config import app_config
+import users
 from flask import Flask, redirect, render_template, request, jsonify, abort, current_user, url_for
 from flask_login import LoginManager, login_required, login_user, logout_user
 from .models import Patient, User  # Import models from respective files
@@ -24,9 +24,13 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('welcome_page.html'))
-
-    # Handle login form submission and user authentication logic here 
+        return redirect(url_for('dashboard.html'))
+    username = request.form['username']
+    password = request.form['password']
+    if user := users.authenticate(username, password):
+        login_user(user)
+        return redirect(url_for('dashboard'))
+    return 'Invalid credentials'
 
 @app.route('/logout')
 @login_required

@@ -87,6 +87,22 @@ class Billing(Base):
 
     BillingID = Column(Integer, primary_key=True)
     PatientID = Column(Integer, ForeignKey('patients.PatientID'))
-    TotalCost = Column(Float)  # Using Float for monetary values
+    TotalCost = Column(Float)  
     PaymentStatus = Column(String)
     DateOfBilling = Column(Text)
+
+class User(Base):
+    __tablename__ = 'users'
+
+    UserID = Column(Integer, primary_key=True)
+    Username = Column(String, unique=True, nullable=False)
+    Password = Column(String, nullable=False)
+    Role = Column(String, nullable=False)
+    PatientID = Column(Integer, ForeignKey('patients.PatientID'), nullable=True)
+    DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'), nullable=True)
+
+    patient = relationship("Patient", backref="user", foreign_keys=[PatientID], primaryjoin="and_(User.PatientID==Patient.PatientID, User.Role=='patient')")
+    doctor = relationship("Doctor", backref="user", foreign_keys=[DoctorID], primaryjoin="and_(User.DoctorID==Doctor.DoctorID, User.Role=='doctor')")
+
+    def __repr__(self):
+        return f"<User(Username={self.Username}, Role={self.Role})>"

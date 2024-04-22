@@ -2,11 +2,11 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin):
-    def __init__(self, user_id, username, password, roles):
+    def __init__(self, user_id, username, password, role):
         self.id = user_id
         self.username = username
         self.password_hash = generate_password_hash(password)
-        self.roles = roles  # List of user roles (e.g., "admin", "doctor")
+        self.role = role  # List of user roles (e.g., "admin", "doctor")
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)

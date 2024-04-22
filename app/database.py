@@ -3,11 +3,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .models import Base, Patient, Doctor
+from .connection_pool import create_connection_pool
 
-# Define the connection string to your database (replace with your details)
+pool = create_connection_pool()
+def get_connection():
+    return pool.connection()
+# Define the connection string to your database
 DATABASE_URL = 'sqlite:///ntsoekhe.db'
-
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, creator=get_connection)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
