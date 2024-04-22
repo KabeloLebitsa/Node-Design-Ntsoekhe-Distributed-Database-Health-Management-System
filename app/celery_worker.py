@@ -1,9 +1,11 @@
 #celery_worker.py
 
 import database 
+import requests
 from celery import Celery
 from .models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
  
+OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
 
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
@@ -28,7 +30,37 @@ def add_patient(patient_data):
     db.close()
     return patient.PatientID
 
+@app.task
+def delete_patient(patient_id):
+    """
+    Celery task to delete a patient record from the database.
 
+    Args:
+        patient_id: The ID of the patient to be deleted.
+    """
+    db = database.get_db()
+    database.delete_patient(patient_id)
+    db.close()
+
+@app.task
+def replicate_data(replicated_data):
+    """
+    Celery task to replicate data across multiple nodes.
+
+    Args:
+        replicated_data: Data to be replicated across the nodes.
+
+    Returns:
+        A list of responses from each node indicating success or failure of the replication.
+    """
+    responses = []
+    for node in OTHER_NODES:
+        try:
+            response = requests.post(f"{node}/replicate", json=replicated_data)
+            responses.append({'node': node, 'status': response.status_code, 'data': response.json()})
+        except requests.exceptions.RequestException as e:
+            responses.append({'node': node, 'status': 'failed', 'error': str(e)})
+    return responses
 @app.task
 def get_patients():
     """

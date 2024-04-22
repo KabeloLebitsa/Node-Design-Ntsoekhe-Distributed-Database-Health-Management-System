@@ -32,6 +32,12 @@ def insert_patient(patient):
     db.commit()
     db.close()
 
+def delete_patient(patient_id):
+    db = get_db()
+    if patient := db.query(Patient).filter_by(PatientID=patient_id).first():
+        db.delete(patient)
+        db.commit()
+    db.close()
 def update_patient(patient_id, new_data):
     db = get_db()
     if patient := db.query(Patient).filter_by(PatientID=patient_id).first():
@@ -82,8 +88,7 @@ def get_doctor_by_id(doctor_id):
 
 def update_doctor(doctor_id, update_fields):
     db = get_db()
-    doctor = db.query(Doctor).filter_by(DoctorID=doctor_id).first()
-    if doctor:
+    if doctor := db.query(Doctor).filter_by(DoctorID=doctor_id).first():
         for key, value in update_fields.items():
             setattr(doctor, key, value)
         db.commit()
@@ -92,8 +97,7 @@ def update_doctor(doctor_id, update_fields):
     
 def delete_doctor(doctor_id):
     db = get_db()
-    doctor = db.query(Doctor).filter_by(DoctorID=doctor_id).first()
-    if doctor:
+    if doctor := db.query(Doctor).filter_by(DoctorID=doctor_id).first():
         db.delete(doctor)
         db.commit()
     db.close()
