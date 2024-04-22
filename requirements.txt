@@ -1,8 +1,12 @@
 requests==2.26.0
 flask
 celery
+aiohttp
+asyncio
 dbutils
+logging
 requests
 werkzeug
+contextlib
 sqlalchemy
 Flask-Login

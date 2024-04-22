@@ -1,11 +1,12 @@
 #celery_worker.py
 
 import database 
-import requests
+import aiohttp
+import asyncio
 from config import Config
 from celery import Celery
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
- 
+
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
 
@@ -43,11 +44,16 @@ def add_patient(patient_data):
     Returns:
         The ID of the newly inserted patient record.
     """
-    patient = Patient(**patient_data)
-    db = database.get_db()
-    database.insert_patient(patient)
-    db.close()
-    return patient.PatientID
+    try:
+        patient = Patient(**patient_data)
+        db = database.get_db()
+        database.insert_patient(patient)
+        db.close()
+        return patient.PatientID
+    except Exception as e:
+        # Handle database error
+        print(f"Error adding patient: {str(e)}")
+        return None
 
 @app.task
 def delete_patient(patient_id):
@@ -62,7 +68,7 @@ def delete_patient(patient_id):
     db.close()
 
 @app.task
-def replicate_data(replicated_data):
+async def replicate_data(replicated_data):
     """
     Celery task to replicate data across multiple nodes.
 
@@ -73,13 +79,21 @@ def replicate_data(replicated_data):
         A list of responses from each node indicating success or failure of the replication.
     """
     responses = []
-    for node in OTHER_NODES:
-        try:
-            response = requests.post(f"{node}/replicate", json=replicated_data)
-            responses.append({'node': node, 'status': response.status_code, 'data': response.json()})
-        except requests.exceptions.RequestException as e:
-            responses.append({'node': node, 'status': 'failed', 'error': str(e)})
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for node in OTHER_NODES:
+            task = asyncio.ensure_future(send_request(session, node, replicated_data))
+            tasks.append(task)
+        responses = await asyncio.gather(*tasks)
     return responses
+
+async def send_request(session, node, replicated_data):
+    try:
+        async with session.post(f"{node}/replicate", json=replicated_data) as response:
+            return {'node': node, 'status': response.status, 'data': await response.json()}
+    except aiohttp.ClientError as e:
+        return {'node': node, 'status': 'failed', 'error': str(e)}
+
 @app.task
 def get_patients():
     """
