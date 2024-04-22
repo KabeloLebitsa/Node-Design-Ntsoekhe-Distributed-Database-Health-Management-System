@@ -1,7 +1,7 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'your_secret_key')  # Use environment variable for secret key
+    #SECRET_KEY = os.environ.get('SECRET_KEY', 'your_secret_key')  # Use environment variable for secret key
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///ntsoekhe.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OTHER_NODES = [

@@ -2,8 +2,8 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .models import Base, Patient, Doctor
-from .connection_pool import create_connection_pool
+from models import Base, Patient, Doctor
+from connection_pool import create_connection_pool
 
 pool = create_connection_pool()
 def get_connection():

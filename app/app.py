@@ -3,7 +3,7 @@
 import users
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from models import Patient, User  
+from models import User  
 
 # Application configuration
 app = Flask(__name__)
@@ -38,12 +38,12 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Home page
+# Home page route
 @app.route('/')
 def index():
     return render_template('login.html')
 
-# Dashboard
+# Dashboard route
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')

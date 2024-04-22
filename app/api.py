@@ -3,7 +3,7 @@
 from flask import Flask, request, jsonify, abort, current_user
 from flask_login import LoginManager, login_required
 from requests import post
-from . import celery_worker
+import celery_worker
 
 app = Flask(__name__)
 
