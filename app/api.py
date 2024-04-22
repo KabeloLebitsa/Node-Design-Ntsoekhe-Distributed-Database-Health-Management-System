@@ -1,11 +1,9 @@
 #api.py
 
-from flask import Flask, redirect, render_template, request, jsonify, abort, current_user, url_for
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask import Flask, request, jsonify, abort, current_user
+from flask_login import LoginManager, login_required
 from requests import post
-from . import connection_pool, celery_worker  # Assuming these are in different files
-from .models import Patient  # Import Patient class from models.py
-from .users import User  # users.py defines User model and authentication logic
+from . import celery_worker
 
 app = Flask(__name__)
 
