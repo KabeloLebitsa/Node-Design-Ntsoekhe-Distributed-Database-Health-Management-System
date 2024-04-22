@@ -4,9 +4,9 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.18.0.0/16
-          gateway: 172.18.0.254
-          ip_range: 172.18.0.0/24
+        - subnet: 172.0.0.1/16
+          gateway: 172.0.0.254
+          ip_range: 172.0.0.1/24
 
 services:
   my_app1:
@@ -19,7 +19,7 @@ services:
       - PORT=8081
     networks:
       my_network:
-        ipv4_address: 172.18.0.2
+        ipv4_address: 172.0.1.1
 
   my_app2:
     build:
@@ -31,7 +31,7 @@ services:
       - PORT=8082
     networks:
       my_network:
-        ipv4_address: 172.18.0.3
+        ipv4_address: 172.0.1.2
 
   my_app3:
     build:
@@ -43,7 +43,7 @@ services:
       - PORT=8083
     networks:
       my_network:
-        ipv4_address: 172.18.0.4
+        ipv4_address: 172.0.1.3
 
   my_app4:
     build:
@@ -55,7 +55,7 @@ services:
       - PORT=8084
     networks:
       my_network:
-        ipv4_address: 172.18.0.5
+        ipv4_address: 172.0.1.4
 
   my_app5:
     build:
@@ -67,4 +67,4 @@ services:
       - PORT=8085
     networks:
       my_network:
-        ipv4_address: 172.18.0.6
+        ipv4_address: 172.0.1.5
