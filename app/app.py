@@ -1,7 +1,7 @@
 #app.py
 
 import users
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from models import User  
 
@@ -13,6 +13,14 @@ app.config.from_object('config')
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+@app.route('/user/info', methods=['GET'])
+@login_required
+def get_user_info():
+  """
+  This function retrieves the currently logged-in user's information.
+  """
+  return jsonify({'user': {'username': current_user.username, 'role': current_user.role}})
 
 # User loader function for Flask-Login
 @login_manager.user_loader
