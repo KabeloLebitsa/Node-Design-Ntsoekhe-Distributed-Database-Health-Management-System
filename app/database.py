@@ -8,6 +8,7 @@ from connection_pool import create_connection_pool
 pool = create_connection_pool()
 def get_connection():
     return pool.connection()
+
 # Define the connection string to your database
 DATABASE_URL = 'sqlite:///ntsoekhe.db'
 engine = create_engine(DATABASE_URL, creator=get_connection)

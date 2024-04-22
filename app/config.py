@@ -1,3 +1,5 @@
+#config.py
+
 import os
 
 class Config:
