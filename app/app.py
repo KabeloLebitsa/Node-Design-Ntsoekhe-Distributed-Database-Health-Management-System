@@ -41,7 +41,7 @@ def logout():
 # Home page route
 @app.route('/')
 def index():
-    return render_template('login.html')
+    return render_template('index.html')
 
 # Dashboard route
 @app.route('/dashboard')
