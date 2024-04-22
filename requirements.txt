@@ -5,3 +5,4 @@ dbutils
 requests
 werkzeug
 sqlalchemy
+Flask-Login

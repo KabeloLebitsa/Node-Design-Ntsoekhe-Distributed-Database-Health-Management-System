@@ -1,8 +1,8 @@
 #app.py
 
 import users
-from flask import Flask, redirect, render_template, request, jsonify, abort, current_user, url_for
-from flask_login import LoginManager, login_required, login_user, logout_user
+from flask import Flask, redirect, render_template, request, url_for
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from .models import Patient, User  
 
 # Application configuration

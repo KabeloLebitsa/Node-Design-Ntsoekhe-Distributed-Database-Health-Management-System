@@ -3,7 +3,6 @@
 import database 
 import requests
 from celery import Celery
-from config import app_config
 from .models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
  
 # Configure Celery Broker and Backend (replace with your configuration details)
