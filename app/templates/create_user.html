@@ -69,7 +69,7 @@
         <option value="" disabled selected>Select Role</option>  
         <option id="role" value="patient" disabled>Patient</option>
         <option id="role" value="doctor" disabled>Doctor</option>
-        <option id="role" value="admin">Admin</option>
+        <option id="role" value="admin" disabled>Admin</option>
         </select>
         <button type="submit">Create User</button>
     </form>
@@ -99,63 +99,58 @@
     init(); // Call the init function on page load
 
     function updateRoleOptions() {
-    if (loggedInUserRole === 'admin') {
-        // Enable all options for admin
-        for (let i = 0; i < roleSelect.children.length; i++) {
-        roleSelect.children[i].disabled = false;
-        }
-    } else if (loggedInUserRole === 'doctor') {
-        // Enable only patient option for doctor
-        roleSelect.children[0].disabled = false; // Patient option
-        for (let i = 1; i < roleSelect.children.length; i++) {
-        roleSelect.children[i].disabled = true;
-        }
-    } else {
-        // Logged-out user or unauthorized role, disable all except admin
-        for (let i = 1; i < roleSelect.children.length; i++) {
-        roleSelect.children[i].disabled = true;
-        }
-    }
-    }
+      if (loggedInUserRole === 'admin') {
+          // Enable all options for admin
+          for (let i = 0; i < roleSelect.children.length; i++) {
+          roleSelect.children[i].disabled = false;
+          }
+      } else if (loggedInUserRole === 'doctor') {
+          // Enable only patient option for doctor
+          roleSelect.children[0].disabled = false; // Patient option
+          for (let i = 1; i < roleSelect.children.length; i++) {
+          roleSelect.children[i].disabled = true;
+          }
+        } 
+      }
     updateRoleOptions();
 
     createUserForm.addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent default form submission
+      event.preventDefault(); // Prevent default form submission
 
-    // Check if a role is selected before proceeding
-    if (roleSelect.selectedIndex === 0) {
-      alert("Please select a role for the user!");
-      return; // Exit the function if no role is selected
-    }
-    
-    const formData = new FormData(this);
-    const jsonData = {};
+      // Check if a role is selected before proceeding
+      if (roleSelect.selectedIndex === 0) {
+        alert("Please select a role for the user!");
+        return; // Exit the function if no role is selected
+      }
+      
+      const formData = new FormData(this);
+      const jsonData = {};
 
-    for (var pair of formData.entries()) {
-        jsonData[pair[0]] = pair[1];
-    }
+      for (var pair of formData.entries()) {
+          jsonData[pair[0]] = pair[1];
+      }
 
-    const selectedRole = jsonData.role;
+      const selectedRole = jsonData.role;
 
-    // Check if user has permission to create this role
-    if (loggedInUserRole === 'admin' ||
-        (loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/users");
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            alert('User created successfully');
-            window.location.href = '/dashboard.html';
-        } else {
-            alert('Error creating user: ' + xhr.responseText);
-        }
-        };
-        xhr.send(JSON.stringify(jsonData));
-    } else {
-        alert('Unauthorized to create user of this role!');
-    }
-    });
+      // Check if user has permission to create this role
+      if (loggedInUserRole === 'admin' ||
+          (loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/users");
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+              alert('User created successfully');
+              window.location.href = '/dashboard.html';
+          } else {
+              alert('Error creating user: ' + xhr.responseText);
+          }
+          };
+          xhr.send(JSON.stringify(jsonData));
+      } else {
+          alert('Unauthorized to create user of this role!');
+      }
+    )};
   </script>
 </body>
 </html>

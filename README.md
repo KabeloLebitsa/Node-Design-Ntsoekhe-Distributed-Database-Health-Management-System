@@ -72,9 +72,11 @@ you run the application using yml file
 1. running application:
     docker-compose up
 
-the nodes will run at three links
-['http://172.18.0.4:8083','http://172.18.0.3:8082','http://172.18.0.2:8081','http://172.18.0.5:8084','http://172.18.0.6:8085']
-,   this are defined statically in the yml file
+the nodes will run at five links
+['https://172.0.1.1:8081','https://172.0.1.2:8082',
+'https://172.0.1.3:8083','https://172.0.1.4:8084',
+'https://172.0.1.5:8085'],  
+this are defined statically in the yml file
 
 NOTE : due to static network address assignments ,  is advisable to remove all existing custom docker networks, to aavoid ip overlap causing malfunction 
 

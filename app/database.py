@@ -4,8 +4,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base, Patient, Doctor
 from connection_pool import create_connection_pool
-import logging
-from contextlib import contextmanager
 
 pool = create_connection_pool()
 
@@ -17,7 +15,6 @@ DATABASE_URL = 'sqlite:///ntsoekhe.db'
 engine = create_engine(DATABASE_URL, creator=get_connection)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@contextmanager
 def get_db():
     db = SessionLocal()
     try:
@@ -31,10 +28,9 @@ def get_db():
 
 def create_all_tables():
     Base.metadata.create_all(bind=engine)
-    logging.info("SUCCESSFULLY CREATED ALL TABLES")
 
 # Functions to interact with the database using models
-def add_user(user):
+def insert_user(user):
     with get_db() as db:
         db.add(user)
 
@@ -78,12 +74,6 @@ def get_all_doctors():
 def get_doctor_by_id(doctor_id):
     with get_db() as db:
         return db.query(Doctor).get(doctor_id)
-
-def update_doctor(doctor_id, update_fields):
-    with get_db() as db:
-        if doctor := db.query(Doctor).get(doctor_id):
-            for key, value in update_fields.items():
-                setattr(doctor, key, value)
 
 def delete_doctor(doctor_id):
     with get_db() as db:

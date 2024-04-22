@@ -15,7 +15,6 @@ login_manager.login_view = 'login.html'  # Redirect to login page on unauthorize
 @login_required
 def create_user():
     user_data = request.get_json()
-    # Assuming you have a function in celery_worker to add a user
     task = celery_worker.add_user.delay(user_data)
     return jsonify({'message': 'User creation task enqueued', 'task_id': task.id}), 202
 @app.route('/patients', methods=['POST'])

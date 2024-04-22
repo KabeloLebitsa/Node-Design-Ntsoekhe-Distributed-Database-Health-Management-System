@@ -12,7 +12,7 @@ app.config.from_object('config')
 # Flask-Login configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login.html'
 
 @app.route('/user/info', methods=['GET'])
 @login_required

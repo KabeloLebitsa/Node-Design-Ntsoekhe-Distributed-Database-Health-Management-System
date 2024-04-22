@@ -4,9 +4,7 @@ celery
 aiohttp
 asyncio
 dbutils
-logging
 requests
 werkzeug
-contextlib
 sqlalchemy
 Flask-Login

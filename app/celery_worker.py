@@ -27,9 +27,9 @@ def add_user(user_data):
     Returns:
         The ID of the newly inserted user record.
     """
-    user = database.User(**user_data)  # Assuming User model has fields that match keys in user_data
+    user = database.User(**user_data)  
     db = database.get_db()
-    database.insert_user(user)  # Assuming you have a function insert_user in your database module
+    database.insert_user(user)  
     db.close()
     return user.UserID
 
