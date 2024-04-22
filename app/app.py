@@ -19,7 +19,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# Login and logout routes (assuming forms or login mechanisms are implemented elsewhere)
+# Login and logout routes
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:

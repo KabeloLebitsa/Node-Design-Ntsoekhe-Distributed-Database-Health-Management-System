@@ -15,9 +15,9 @@ class User(UserMixin):
 
     def can(self, permission):
         permissions = {
-            "CREATE_PATIENT": ["admin"],
+            "CREATE_PATIENT": ["admin","doctor"],
             "READ_PATIENT": ["admin", "doctor"],
-            "UPDATE_PATIENT": ["admin"],
+            "UPDATE_PATIENT": ["admin","doctor"],
             "DELETE_PATIENT": ["admin"],
         }
 
