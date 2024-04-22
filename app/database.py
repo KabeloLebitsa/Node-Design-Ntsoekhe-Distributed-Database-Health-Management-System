@@ -27,9 +27,13 @@ def create_all_tables():
     Base.metadata.create_all(bind=engine)
     print("SUCCESSFULLY CREATED ALL TABLES")
 
-
 # Functions to interact with the database using models
-
+def add_user(user):
+    db = get_db()
+    db.add(user)
+    db.commit()
+    db.close()
+    
 def insert_patient(patient):
     db = get_db()
     db.add(patient)

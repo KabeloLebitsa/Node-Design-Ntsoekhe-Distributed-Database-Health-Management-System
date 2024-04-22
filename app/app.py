@@ -48,9 +48,20 @@ def login():
         return f'An error occurred: {str(e)}'
 
 def validate_inputs(username, password):
-    # Add validation logic here
-    # Return True if inputs are valid, False otherwise
-    ...
+  # Check if the username and password are not empty
+  if not username or not password:
+      return False
+
+  # Check for minimum length requirements
+  min_username_length = 5
+  min_password_length = 8
+  if len(username) < min_username_length or len(password) < min_password_length:
+      return False
+
+  # Check for password complexity (example: must contain at least one number and one uppercase letter)
+  if not any(char.isdigit() for char in password):
+      return False
+  return any((char.isupper() for char in password))
 
 # Logout route
 @app.route('/logout')

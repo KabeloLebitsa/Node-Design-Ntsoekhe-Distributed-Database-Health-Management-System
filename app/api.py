@@ -2,7 +2,6 @@
 
 from flask import Flask, request, jsonify, abort, current_user
 from flask_login import LoginManager, login_required
-from requests import post
 import celery_worker
 
 app = Flask(__name__)
@@ -12,12 +11,16 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login.html'  # Redirect to login page on unauthorized access
 
+@app.route('/users', methods=['POST'])
+@login_required
+def create_user():
+    user_data = request.get_json()
+    # Assuming you have a function in celery_worker to add a user
+    task = celery_worker.add_user.delay(user_data)
+    return jsonify({'message': 'User creation task enqueued', 'task_id': task.id}), 202
 @app.route('/patients', methods=['POST'])
 @login_required
 def create_patient():
-    if not current_user.can_create_patient:
-        return abort(403)
-
     patient_data = request.get_json()
     # Enqueue the creation task to Celery
     task = celery_worker.add_patient.delay(patient_data)

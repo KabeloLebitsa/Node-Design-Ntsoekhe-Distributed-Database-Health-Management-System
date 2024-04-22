@@ -16,6 +16,23 @@ database.create_all_tables()
 OTHER_NODES = app.config['OTHER_NODES']
 
 @app.task
+def add_user(user_data):
+    """
+    Celery task to add a new user record to the database.
+
+    Args:
+        user_data: A dictionary containing user information (username, email, etc.).
+
+    Returns:
+        The ID of the newly inserted user record.
+    """
+    user = database.User(**user_data)  # Assuming User model has fields that match keys in user_data
+    db = database.get_db()
+    database.insert_user(user)  # Assuming you have a function insert_user in your database module
+    db.close()
+    return user.UserID
+
+@app.task
 def add_patient(patient_data):
     """
     Celery task to add a new patient record to the database.
