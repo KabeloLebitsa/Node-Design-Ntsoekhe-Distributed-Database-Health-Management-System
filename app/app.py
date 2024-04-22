@@ -23,7 +23,7 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('display_patients.html'))
+        return redirect(url_for('welcome_page.html'))
 
     # Handle login form submission and user authentication logic here 
 
@@ -37,4 +37,4 @@ def logout():
 # Home page
 @app.route('/')
 def index():
-    return render_template('welcome_page.html')
+    return render_template('login.html')

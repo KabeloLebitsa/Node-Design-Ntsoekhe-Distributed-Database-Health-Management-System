@@ -2,109 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Patient</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
             margin: 0;
-            padding: 0;
-            background-color: #f1f1f1;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 15%; /* Adjust the width as needed */
-            background-color: green;
-            padding: 10px;
-            box-sizing: border-box;
-            border-top-right-radius: 10px;
-            border-bottom-right-radius: 10px;
-            color: white;
-        }
-
-        .content {
-            width: 85%; /* Adjust the width as needed */
-            padding: 10px;
-            box-sizing: border-box;
+            padding: 20px;
         }
 
         h1 {
-            color: green;
-            background-color: #f1f1f1;
-            padding: 10px;
-            margin-top: 0;
+            color: #333333;
+            margin-bottom: 20px;
         }
 
-        input[type="text"],
-        input[type="date"],
-        select {
+        form {
+            background-color: #ffffff;
+            padding: 20px;
             border-radius: 5px;
-            padding: 6px;
-            margin-bottom: 10px;
-            width: 100%; /* Adjust the width as needed */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input, button {
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 17px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             box-sizing: border-box;
+            display: block;
+            width: 95%;
         }
 
-        input[type="submit"] {
-            border-radius: 5px;
-            padding: 5px 10px;
-            background-color: blue;
-            color: white;
-            font-size: 14px; /* Adjust the font size as needed */
-            width: fit-content;
-        }
-        
-        label {
-            font-weight: bold;
+        button {
+            cursor: pointer;
+            background: #ddd;
         }
 
-        /* Styling for the "Dashboard" link */
-        .dashboard-link {
-            background-color: green;
-            padding: 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            color: white;
-            display: inline-block;
-            margin-top: 10px;
+        button:hover {
+            background: #bbb;
         }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        
-    </div>
-    <div class="content">
-        <h1>Create New Patient</h1>
-        <form id="patientForm" method="post">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="Name" required><br>
-            
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="DateOfBirth" required><br>
-            
-            <label for="gender">Gender:</label>
-            <select id="gender" name="Gender" required>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-            </select><br>
-            
-            <label for="contact">Contact Information:</label>
-            <input type="text" id="contact" name="ContactInformation" required><br>
-            
-            <label for="insurance">Insurance Information:</label>
-            <input type="text" id="insurance" name="InsuranceInformation" required><br>
-            
-            <input type="submit" value="Create">
-            <div class="dashboard-link">
-                <a href="/options">Dashboard</a>
-            </div>
-        </form>   
-    </div>
+    <h1>Create New Patient</h1>
+    <form id="create-patient-form">
+        <input type="text" id="patient-id" placeholder="Patient ID" required>
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="date" id="date-of-birth" placeholder="Date of Birth" required>
+        <input type="text" id="gender" placeholder="Gender" required>
+        <input type="text" id="contact-information" placeholder="Contact Information" required>
+        <input type="text" id="insurance-information" placeholder="Insurance Information" required>
+        <button type="submit">Create Patient</button>
+    </form>
 
-    <script>
+<script>
         document.getElementById("patientForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent the default form submission
 
@@ -123,9 +76,19 @@
             xhr.open("POST", "/patients");
             xhr.setRequestHeader("Content-Type", "application/json");
             xhr.send(JSON.stringify(jsonData));
-
-            // Optional: Handle the API response
-            
+            .then(response => {
+                if (response.ok) {
+                    alert('Patient created successfully');
+                    window.location.href = '/create_patient.html';
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.message);
+                    });
+                }
+            })
+            .catch(error => {
+                alert('Error creating patient: ' + error.message);
+            });
         });
     </script>
 </body>

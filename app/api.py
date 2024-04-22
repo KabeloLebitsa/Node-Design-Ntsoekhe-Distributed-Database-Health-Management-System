@@ -11,8 +11,6 @@ OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://17
 
 app = Flask(__name__)
 
-# ... other configurations (secret key, etc.)
-
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
