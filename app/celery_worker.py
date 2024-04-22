@@ -3,15 +3,16 @@
 import database 
 import requests
 from celery import Celery
+from config import app_config
 from .models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
  
-OTHER_NODES = ['https://172.18.0.4:8083', 'https://172.18.0.3:8082', 'https://172.18.0.2:8081', 'https://172.18.0.5:8084', 'https://172.18.0.6:8085']
-
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
+app.conf.update(app.config)
 
 # Optional: Automatically create tables on Celery worker startup
 database.create_all_tables()
+OTHER_NODES = app.conf['OTHER_NODES']
 
 @app.task
 def add_patient(patient_data):

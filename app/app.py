@@ -1,5 +1,6 @@
 #app.py
 
+from config import app_config
 from flask import Flask, redirect, render_template, request, jsonify, abort, current_user, url_for
 from flask_login import LoginManager, login_required, login_user, logout_user
 from .models import Patient, User  # Import models from respective files
