@@ -7,11 +7,11 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///ntsoekhe.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OTHER_NODES = [
-        'https://172.18.0.4:8083',
-        'https://172.18.0.3:8082',
-        'https://172.18.0.2:8081',
-        'https://172.18.0.5:8084',
-        'https://172.18.0.6:8085'
+        'https://172.0.1.1:8081',
+        'https://172.0.1.2:8082',
+        'https://172.0.1.3:8083',
+        'https://172.0.1.4:8084',
+        'https://172.0.1.5:8085'
     ]
 
 class DevelopmentConfig(Config):

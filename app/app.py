@@ -34,10 +34,23 @@ def login():
         return redirect(url_for('/dashboard'))
     username = request.form.get('username')
     password = request.form.get('password')
-    if user := users.authenticate(username, password):
-        login_user(user)
-        return redirect(url_for('/dashboard'))
-    return 'Invalid username or password'
+    if not username or not password:
+        return 'Invalid username or password'
+    # Validate username and password inputs
+    if not validate_inputs(username, password):
+        return 'Invalid username or password'
+    try:
+        if user := users.authenticate(username, password):
+            login_user(user)
+            return redirect(url_for('/dashboard'))
+        return 'Invalid username or password'
+    except Exception as e:
+        return f'An error occurred: {str(e)}'
+
+def validate_inputs(username, password):
+    # Add validation logic here
+    # Return True if inputs are valid, False otherwise
+    ...
 
 # Logout route
 @app.route('/logout')
@@ -57,4 +70,5 @@ def dashboard():
     return render_template('dashboard.html')
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0',port=5000)
+    port = app.config.get('PORT', 5000)
+    app.run(debug=False, host='127.0.0.1', port=port)
