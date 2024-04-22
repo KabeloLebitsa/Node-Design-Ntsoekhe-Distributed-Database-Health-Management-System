@@ -10,6 +10,7 @@
             background-color: #f7f7f7;
             margin: 0;
             padding: 20px;
+            position: relative;
         }
 
         h1 {
@@ -57,38 +58,29 @@
         <button type="submit">Create Patient</button>
     </form>
 
-<script>
-        document.getElementById("patientForm").addEventListener("submit", function(event) {
+    <script>
+        document.getElementById("create-patient-form").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent the default form submission
 
-            // Gather the form data
-            var form = document.getElementById("patientForm");
-            var formData = new FormData(form);
+            var formData = new FormData(this);
             var jsonData = {};
 
-            // Convert form data to JSON format
             for (var pair of formData.entries()) {
                 jsonData[pair[0]] = pair[1];
             }
 
-            // Send the JSON data to the backend API
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "/patients");
             xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send(JSON.stringify(jsonData));
-            .then(response => {
-                if (response.ok) {
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
                     alert('Patient created successfully');
                     window.location.href = '/create_patient.html';
                 } else {
-                    return response.json().then(data => {
-                        throw new Error(data.message);
-                    });
+                    alert('Error creating patient: ' + xhr.responseText);
                 }
-            })
-            .catch(error => {
-                alert('Error creating patient: ' + error.message);
-            });
+            };
+            xhr.send(JSON.stringify(jsonData));
         });
     </script>
 </body>
