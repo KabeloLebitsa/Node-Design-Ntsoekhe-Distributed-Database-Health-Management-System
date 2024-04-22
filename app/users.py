@@ -19,6 +19,11 @@ class User(UserMixin):
             "READ_PATIENT": ["admin", "doctor"],
             "UPDATE_PATIENT": ["admin","doctor"],
             "DELETE_PATIENT": ["admin"],
+            
+            "CREATE_DOCTOR": ["admin"],
+            "READ_DOCTOR": ["admin"],
+            "UPDATE_DOCTOR": ["admin"],
+            "DELETE_DCTOR": ["admin"],
         }
 
         return any(

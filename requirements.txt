@@ -2,5 +2,6 @@ requests==2.26.0
 flask
 celery
 dbutils
+requests
 werkzeug
 sqlalchemy
