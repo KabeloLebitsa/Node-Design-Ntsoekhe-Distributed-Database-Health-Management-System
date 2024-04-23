@@ -1,9 +1,9 @@
 #config.py
 
 import os
-import secrets
+
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', secrets.token_urlsafe(32))  # Use environment variable for secret key
+    SECRET_KEY = os.urandom(32)
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///ntsoekhe.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OTHER_NODES = [
