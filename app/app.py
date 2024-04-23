@@ -1,6 +1,5 @@
 #app.py
 
-from users import Users
 from flask import Flask, redirect, render_template, request, url_for, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from models import User  
@@ -50,7 +49,7 @@ def login():
     if not validate_inputs(username, password):
         return 'Invalid username or password'
     try:
-        if user := Users.authenticate(username, password):
+        if user := User.authenticate(username, password):
             login_user(user)
             return render_template('dashboard.html')
         return 'Invalid username or password'
