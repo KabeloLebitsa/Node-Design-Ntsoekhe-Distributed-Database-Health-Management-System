@@ -21,6 +21,17 @@ login_manager.login_view = 'login'
 @app.route('/')
 def index():
     return render_template('index.html')
+# Display patients page route
+@app.route('/patients/display')
+@login_required
+def display_patients():
+    return render_template('display_patients.html')
+# Create patients page route
+@login_required
+@app.route('/patients/create')
+def create_patients():
+    return render_template('create_patients.html')
+
 # Dashboard route
 @app.route('/dashboard')
 @login_required
@@ -48,23 +59,18 @@ def login_page():
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return render_template('dashboard.html')
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    # Validate username and password inputs
-    if not validate_inputs(username, password):
-        return 'Invalid username or password'
-    try:
-        if user := User.authenticate(username, password):
-            login_user(user)
-            return render_template('dashboard.html')
-        return 'Invalid username or password'
-    except Exception as e:
-        return f'An error occurred: {str(e)}'
+  if current_user.is_authenticated:
+    return redirect(url_for('dashboard'))
+  username = request.form.get('username')
+  password = request.form.get('password')
 
-def validate_inputs(username, password):
+  user = User.query.filter_by(username=username).first()
+  if user and user.check_password(password):
+    login_user(user)
+    return redirect(url_for('dashboard'))
+  return 'Invalid username or password'
+
+'''def validate_inputs(username, password):
   # Check if the username and password are not empty
   if not username or not password:
       return False
@@ -78,14 +84,14 @@ def validate_inputs(username, password):
   # Check for password complexity (example: must contain at least one number and one uppercase letter)
   if not any(char.isdigit() for char in password):
       return False
-  return any((char.isupper() for char in password))
+  return any((char.isupper() for char in password))'''
 
 # Logout route
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return render_template('login.html')
+    return redirect(url_for('login_page'))
 
 # Main function
 if __name__ == '__main__':
