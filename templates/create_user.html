@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create User</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      position: relative;
+    }
+
+    h1 {
+      color: #333333;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input, button {
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 17px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: block;
+      width: 95%;
+    }
+
+    button {
+      cursor: pointer;
+      background: #ddd;
+    }
+
+    button:hover {
+      background: #bbb;
+    }
+
+    /* Style for enhanced role options */
+    #role {
+      appearance: none; /* Remove default dropdown styles */
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #role:focus {
+      outline: none;
+      border-color: #aaa; /* Change border color on focus */
+    }
+  </style>
+</head>
+    <body>
+    <h1>Create New User</h1>
+    <form id="create-user-form">
+        <input type="text" id="username" name="username" placeholder="Username" required>
+        <input type="password" id="password" name="password" placeholder="Password" required>
+        <select id="role" required>
+        <option value="" disabled selected>Select Role</option> 
+        <option id="role" value="admin" disabled>Admin</option> 
+        <option id="role" value="doctor" disabled>Doctor</option>
+        <option id="role" value="patient" disabled>Patient</option>
+        </select>
+        <button type="submit">Create User</button>
+    </form>
+
+  <script>
+    const roleSelect = document.getElementById('role');
+    const createUserForm = document.getElementById('create-user-form');
+
+    async function getLoggedInUserInfo() {
+        try {
+            const response = await fetch('/user/info'); 
+            if (!response.ok) {
+            throw new Error('Failed to get user info');
+            }
+            const data = await response.json();
+            return data.user; 
+        } catch (error) {
+            console.error('Error fetching user info:', error);
+        }
+    }
+
+    async function init() {
+        const user = await getLoggedInUserInfo();
+        loggedInUserRole = user.role; // Update the global variable with the retrieved role
+        updateRoleOptions(); // Call the function to update role options based on user role
+    }
+    init(); // Call the init function on page load
+
+    function updateRoleOptions() {
+      if (loggedInUserRole === 'admin') {
+          // Enable all options for admin
+          for (let i = 0; i < roleSelect.children.length; i++) {
+          roleSelect.children[i].disabled = false;
+          }
+      } else if (loggedInUserRole === 'doctor') {
+          // Enable only patient option for doctor
+          roleSelect.children[3].disabled = false; // Patient option
+          for (let i = 1; i < roleSelect.children.length; i++) {
+          roleSelect.children[i].disabled = true;
+          }
+        } 
+      }
+    updateRoleOptions();
+
+    createUserForm.addEventListener("submit", function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      // Check if a role is selected before proceeding
+      if (roleSelect.selectedIndex === 0) {
+        alert("Please select a role for the user!");
+        return; // Exit the function if no role is selected
+      }
+      
+      const formData = new FormData(this);
+      const jsonData = {};
+
+      for (var pair of formData.entries()) {
+          jsonData[pair[0]] = pair[1];
+      }
+
+      const selectedRole = jsonData.role;
+
+      // Check if user has permission to create this role
+      if (loggedInUserRole === 'admin' ||
+          (loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/users");
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+              alert('User created successfully');
+              window.location.href = '/dashboard.html';
+          } else {
+              alert('Error creating user: ' + xhr.responseText);
+          }
+          };
+          xhr.send(JSON.stringify(jsonData));
+      } else {
+          alert('Unauthorized to create user of this role!');
+      }
+    )};
+  </script>
+</body>
+</html>
