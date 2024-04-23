@@ -63,13 +63,12 @@
     <h1>Create New User</h1>
     <form id="create-user-form">
         <input type="text" id="username" name="username" placeholder="Username" required>
-        <input type="email" id="email" name="email" placeholder="Email" required>
         <input type="password" id="password" name="password" placeholder="Password" required>
         <select id="role" required>
-        <option value="" disabled selected>Select Role</option>  
-        <option id="role" value="patient" disabled>Patient</option>
+        <option value="" disabled selected>Select Role</option> 
+        <option id="role" value="admin" disabled>Admin</option> 
         <option id="role" value="doctor" disabled>Doctor</option>
-        <option id="role" value="admin" disabled>Admin</option>
+        <option id="role" value="patient" disabled>Patient</option>
         </select>
         <button type="submit">Create User</button>
     </form>
@@ -106,7 +105,7 @@
           }
       } else if (loggedInUserRole === 'doctor') {
           // Enable only patient option for doctor
-          roleSelect.children[0].disabled = false; // Patient option
+          roleSelect.children[3].disabled = false; // Patient option
           for (let i = 1; i < roleSelect.children.length; i++) {
           roleSelect.children[i].disabled = true;
           }

@@ -2,8 +2,9 @@
 
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import User
 
-class User(UserMixin):
+class Users(UserMixin):
     def __init__(self, user_id, username, password, role):
         self.id = user_id
         self.username = username
@@ -15,26 +16,8 @@ class User(UserMixin):
 
     # Implement methods for additional user information (e.g., email, name)
 
-    def can(self, permission):
-        permissions = {
-            "CREATE_PATIENT": ["admin","doctor"],
-            "READ_PATIENT": ["admin", "doctor"],
-            "UPDATE_PATIENT": ["admin","doctor"],
-            "DELETE_PATIENT": ["admin"],
-            
-            "CREATE_DOCTOR": ["admin"],
-            "READ_DOCTOR": ["admin"],
-            "UPDATE_DOCTOR": ["admin"],
-            "DELETE_DCTOR": ["admin"],
-        }
-
-        return any(
-            perm == permission
-            and any(role in self.roles.split(",") for role in allowed_roles)
-            for perm, allowed_roles in permissions.items()
-        )
-
-# user authentication logic 
-def authenticate(username, password):
-    user = User.query.filter_by(username=username).first()
-    return user if user and user.verify_password(password) else None
+    # user authentication logic 
+    def authenticate(self, username, password):
+        usr = self.username
+        user = User.query.filter_by(usr=username).first()
+        return user if user and self.verify_password(password) else None

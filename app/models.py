@@ -1,6 +1,6 @@
 # models.py
 
-from sqlalchemy import Column, Float, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Float, Integer, String, Text, Date, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -11,7 +11,7 @@ class Patient(Base):
 
     PatientID = Column(Integer, primary_key=True)
     Name = Column(String)
-    DateOfBirth = Column(Text)
+    DateOfBirth = Column(Date)
     Gender = Column(String)
     ContactInformation = Column(String)
     InsuranceInformation = Column(String)
@@ -59,7 +59,7 @@ class Appointment(Base):
     AppointmentID = Column(Integer, primary_key=True)
     PatientID = Column(Integer, ForeignKey('patients.PatientID'))
     DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
-    AppointmentDateTime = Column(Text)
+    AppointmentDateTime = Column(Date)
     Purpose = Column(String)
 
 class MedicalRecord(Base):
@@ -68,7 +68,7 @@ class MedicalRecord(Base):
     RecordID = Column(Integer, primary_key=True)
     PatientID = Column(Integer, ForeignKey('patients.PatientID'))
     DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
-    DateOfVisit = Column(Text)
+    DateOfVisit = Column(Date)
     Diagnosis = Column(Text)
     TreatmentPlan = Column(Text)
 
@@ -89,7 +89,7 @@ class Billing(Base):
     PatientID = Column(Integer, ForeignKey('patients.PatientID'))
     TotalCost = Column(Float)  
     PaymentStatus = Column(String)
-    DateOfBilling = Column(Text)
+    DateOfBilling = Column(Date)
 
 class User(Base):
     __tablename__ = 'users'

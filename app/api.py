@@ -1,6 +1,6 @@
 #api.py
 
-from flask import Flask, request, jsonify, abort, current_user
+from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_required
 import celery_worker
 
@@ -9,7 +9,7 @@ app = Flask(__name__)
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login.html'  # Redirect to login page on unauthorized access
+login_manager.login_view = 'login.html'
 
 @app.route('/users', methods=['POST'])
 @login_required
@@ -29,9 +29,6 @@ def create_patient():
 @app.route('/patients/<int:patient_id>', methods=['GET'])
 @login_required
 def get_patient_by_id(patient_id):
-    if not current_user.can_read_patient:
-        return abort(403)  # Forbidden
-
     if patient := celery_worker.get_patient_by_id(patient_id):
         return jsonify(patient.serialize()), 200
     else:
@@ -49,9 +46,6 @@ def replicate_patient():
 @app.route('/patients/<int:patient_id>', methods=['PUT'])
 @login_required
 def update_patient(patient_id):
-    if not current_user.can_update_patient:
-        return abort(403)  # Forbidden
-
     update_data = request.get_json()
 
     # Enqueue the update task to Celery
@@ -61,9 +55,6 @@ def update_patient(patient_id):
 @app.route('/patients/<int:patient_id>', methods=['DELETE'])
 @login_required
 def delete_patient(patient_id):
-    if not current_user.can_delete_patient:
-        return abort(403)
-
     # Enqueue the delete task to Celery
     task = celery_worker.delete_patient.delay(patient_id)
     return jsonify({'message': 'Delete request received', 'task_id': task.id}), 202

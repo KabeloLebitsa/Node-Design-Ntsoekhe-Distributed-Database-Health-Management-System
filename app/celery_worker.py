@@ -5,16 +5,16 @@ import aiohttp
 import asyncio
 from config import Config
 from celery import Celery
-from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing  # Assuming models.py is in the directory
+from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
 
 app.config.from_object(Config)
+OTHER_NODES = app.config['OTHER_NODES']
 
 # Optional: Automatically create tables on Celery worker startup
 database.create_all_tables()
-OTHER_NODES = app.config['OTHER_NODES']
 
 @app.task
 def add_user(user_data):
@@ -27,7 +27,7 @@ def add_user(user_data):
     Returns:
         The ID of the newly inserted user record.
     """
-    user = database.User(**user_data)  
+    user = User(**user_data)  
     db = database.get_db()
     database.insert_user(user)  
     db.close()
