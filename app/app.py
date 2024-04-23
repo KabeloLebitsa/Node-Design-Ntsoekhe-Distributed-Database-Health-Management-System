@@ -61,15 +61,15 @@ def login():
         return render_template('dashboard.html')  # Redirect to dashboard if already logged in
 
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form['username']
+        password = request.form['password']
+        user = database.authenticate_user(username, password)
+        if not user:
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
 
-        if user := database.authenticate_user(username, password):
-            login_user(user)
-            return render_template('dashboard.html')  # Redirect to dashboard after successful login
-        else:
-            error = 'Invalid username or password'
-            return render_template('login.html', error=error)
+        login_user(user)
+        return redirect(url_for('dashboard'))  # Redirect to dashboard after successful login
 
     return render_template('login.html')
 

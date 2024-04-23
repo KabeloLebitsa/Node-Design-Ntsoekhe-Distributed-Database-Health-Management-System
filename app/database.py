@@ -32,20 +32,20 @@ def create_all_tables():
 # Functions to interact with the database using models
 def insert_user(user):
     with get_db() as db:
-        db.add(user)
+        db.merge(user)
 
 def insert_patient(patient):
     with get_db() as db:
-        db.add(patient)
+        db.merge(patient)
 
 def delete_patient(patient_id):
     with get_db() as db:
-        if patient := db.query(Patient).get(patient_id):
+        if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
             db.delete(patient)
 
 def update_patient(patient_id, new_data):
     with get_db() as db:
-        if patient := db.query(Patient).get(patient_id):
+        if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
             for key, value in new_data.items():
                 setattr(patient, key, value)
 
@@ -55,15 +55,15 @@ def get_all_patients():
 
 def get_patient_by_id(patient_id):
     with get_db() as db:
-        return db.query(Patient).get(patient_id)
+        return db.query(Patient).filter(Patient.id == patient_id).one_or_none()
 
 def insert_doctor(doctor):
     with get_db() as db:
-        db.add(doctor)
+        db.merge(doctor)
 
 def update_doctor(doctor_id, new_data):
     with get_db() as db:
-        if doctor := db.query(Doctor).get(doctor_id):
+        if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
             for key, value in new_data.items():
                 setattr(doctor, key, value)
 
@@ -73,30 +73,36 @@ def get_all_doctors():
 
 def get_doctor_by_id(doctor_id):
     with get_db() as db:
-        return db.query(Doctor).get(doctor_id)
+        return db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none()
 
 def delete_doctor(doctor_id):
     with get_db() as db:
-        if doctor := db.query(Doctor).get(doctor_id):
+        if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
             db.delete(doctor)
 
 def authenticate_user(username, password):
-        """
-        This function authenticates a user based on username and password.
+    """
+    This function authenticates a user based on username and password.
 
-        Args:
-            username (str): Username provided by the user during login.
-            password (str): Password provided by the user during login.
+    Args:
+        username (str): Username provided by the user during login.
+        password (str): Password provided by the user during login.
 
-        Returns:
-            User object: Returns the User object if authentication is successful, otherwise None.
-        """
+    Returns:
+        User object: Returns the User object if authentication is successful, otherwise None.
+    """
+    try:
         with get_db() as db:
-            if user := db(User).query.filter_by(username).first():
-                    # Check stored password against provided password
-                return None if user.Password != password else user
+            if u_password := db.query(User.Password).filter_by(username).scalar():
+                # Check stored password against provided password
+                return None if u_password != password else db.query(User).filter_by(username).first()
             else:
                 return None
+    except Exception as e:
+        # Handle database errors
+        print(f"Error occurred during authentication: {e}")
+        return None
+
 def load_user(user_id):
     with get_db() as db:
-        return db.query(User).get(int(user_id))
+        return db.query(User).get(user_id)
