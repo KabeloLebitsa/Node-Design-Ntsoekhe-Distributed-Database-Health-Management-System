@@ -1,19 +1,21 @@
 #database.py
 
+import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 from models import Base, Patient, Doctor, User
-from connection_pool import create_connection_pool
+#from connection_pool import create_connection_pool
 
-pool = create_connection_pool()
+DATABASE_URL = 'ntsoekhe.db'
+pool = QueuePool(creator=sqlite3.connect(DATABASE_URL),  # Use sqlite3.connect as the creator
+                  pool_size=10,
+                  max_overflow=0)
 
-def get_connection():
-    return pool.connection()
-
-# Define the connection string to your database
-DATABASE_URL = 'sqlite:///ntsoekhe.db'
-engine = create_engine(DATABASE_URL, creator=get_connection)
+engine = create_engine(DATABASE_URL, pool=pool)  # Explicitly set the pool
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
 
 def get_db():
     db = SessionLocal()

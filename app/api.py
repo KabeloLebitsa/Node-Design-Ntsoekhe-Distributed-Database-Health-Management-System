@@ -3,12 +3,7 @@
 from flask import Flask, request, jsonify
 from flask_login import LoginManager, login_required
 import celery_worker
-
-app = Flask(__name__)
-
-# Configure Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
+from celery_worker import app
 
 @app.route('/users', methods=['POST'])
 @login_required

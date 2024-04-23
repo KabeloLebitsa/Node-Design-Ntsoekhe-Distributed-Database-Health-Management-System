@@ -1,18 +1,10 @@
 #app.py
 
 import database
-from flask import Flask, redirect, render_template, request, url_for, jsonify, flash
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user 
-from config import app_config 
+from celery_worker import app
+from flask import redirect, render_template, request, url_for, jsonify, flash
+from flask_login import login_required, login_user, logout_user, current_user  
 
-# Application configuration
-app = Flask(__name__)
-app.config.from_object(app_config)
-
-# Flask-Login configuration
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 # Home page route
 @app.route('/')
@@ -45,7 +37,7 @@ def get_user_info():
   return jsonify({'User': {'Username': current_user.Username, 'Role': current_user.Role}})
 
 # User loader function for Flask-Login
-@login_manager.user_loader
+@app.login_manager.user_loader
 def load_user(user_id):
     return database.load_user(user_id)
 

@@ -3,20 +3,30 @@
 import database 
 import aiohttp
 import asyncio
+from flask import Flask
 from config import app_config
 from celery import Celery
+from flask_login import LoginManager
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 
-# Configure Celery Broker and Backend (replace with your configuration details)
-app = Celery('tasks', broker='amqp://localhost:8089', backend='redis://localhost:8090')
-
+app = Flask(__name__)
 app.config.from_object(app_config)
+
+# Configure Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# Configure Celery Broker and Backend (replace with your configuration details)
+celery_app = Celery(app.import_name, broker='amqp://localhost:8089', backend='redis://localhost:8090')
+
+celery_app.conf.update(app.config)
 OTHER_NODES = app.config['OTHER_NODES']
 
 # Optional: Automatically create tables on Celery worker startup
 database.create_all_tables()
 
-@app.task
+@celery_app.task
 def add_user(user_data):
     """
     Celery task to add a new user record to the database.
@@ -33,7 +43,7 @@ def add_user(user_data):
     db.close()
     return user.UserID
 
-@app.task
+@celery_app.task
 def add_patient(patient_data):
     """
     Celery task to add a new patient record to the database.
@@ -55,7 +65,7 @@ def add_patient(patient_data):
         print(f"Error adding patient: {str(e)}")
         return None
 
-@app.task
+@celery_app.task
 def delete_patient(patient_id):
     """
     Celery task to delete a patient record from the database.
@@ -67,7 +77,7 @@ def delete_patient(patient_id):
     database.delete_patient(patient_id)
     db.close()
 
-@app.task
+@celery_app.task
 async def replicate_data(replicated_data):
     """
     Celery task to replicate data across multiple nodes.
@@ -94,7 +104,7 @@ async def send_request(session, node, replicated_data):
     except aiohttp.ClientError as e:
         return {'node': node, 'status': 'failed', 'error': str(e)}
 
-@app.task
+@celery_app.task
 def get_patients():
     """
     Celery task to retrieve all patient records from the database.
@@ -108,7 +118,7 @@ def get_patients():
     return patients
 
 
-@app.task
+@celery_app.task
 def get_patient_by_id(patient_id):
     """
     Celery task to retrieve a specific patient record based on the ID.
@@ -125,7 +135,7 @@ def get_patient_by_id(patient_id):
     return patient
 
 
-@app.task
+@celery_app.task
 def update_patient(patient_id, new_data):
     """
     Celery task to update a patient record in the database.
@@ -142,7 +152,7 @@ def update_patient(patient_id, new_data):
     db.close()
     return patient
 
-@app.task
+@celery_app.task
 def add_doctor(doctor_data):
     """
     Celery task to add a new doctor record to the database.
@@ -159,7 +169,7 @@ def add_doctor(doctor_data):
     db.close()
     return doctor.DoctorID
 
-@app.task
+@celery_app.task
 def get_doctors():
     """
     Celery task to retrieve all doctor records from the database.
@@ -172,7 +182,7 @@ def get_doctors():
     db.close()
     return doctors
 
-@app.task
+@celery_app.task
 def get_doctor_by_id(doctor_id):
     """
     Celery task to retrieve a specific doctor record based on the ID.
@@ -188,7 +198,7 @@ def get_doctor_by_id(doctor_id):
     db.close()
     return doctor
 
-@app.task
+@celery_app.task
 def update_doctor(doctor_id, new_data):
     """
     Celery task to update a doctor record in the database.
