@@ -2,10 +2,8 @@
 
 import database
 from flask import Flask, redirect, render_template, request, url_for, jsonify, flash
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from models import User 
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user 
 from config import app_config 
-from sqlalchemy.orm import query
 
 # Application configuration
 app = Flask(__name__)
