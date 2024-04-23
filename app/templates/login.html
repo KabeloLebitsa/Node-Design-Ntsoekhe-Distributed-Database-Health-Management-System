@@ -54,32 +54,28 @@
     </form>
 
 <script>
-    document.getElementById("login-form").addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent the default form submission
+    document.getElementById("login-form").addEventListener("submit", async function(event) {
+    event.preventDefault(); // Prevent the default form submission
 
-        // Gather the form data
-        var form = document.getElementById("login-form");
-        var formData = new FormData(form);
-        var jsonData = {};
+    var form = document.getElementById("login-form");
+    var formData = new FormData(form);
 
-        // Convert form data to JSON format
-        for (var pair of formData.entries()) {
-            jsonData[pair[0]] = pair[1];
+    try {
+        const response = await fetch("/login", {
+            method: "POST",
+            body: formData // Send form data directly
+        });
+
+        if (response.ok) {
+            window.location.href = 'dashboard';
+        } else {
+            const errorText = await response.text();
+            alert('Error logging in: ' + errorText);
         }
-
-        // Send the JSON data to the backend API
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/login");
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.send(JSON.stringify(jsonData));
-        xhr.onload = function() {
-            if (xhr.status == 200) {
-                window.location.href = 'dashboard';
-            } else {
-                alert('Error logging in: ' + xhr.responseText);
-            }
-        };
-    });
+    } catch (error) {
+        alert('Network error: could not connect to the server.');
+    }
+});
 </script>
 </body>
 </html>

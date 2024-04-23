@@ -92,7 +92,7 @@ class Billing(Base):
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)
 
-class User(Base, UserMixin):
+class User(Base):
     __tablename__ = 'users'
 
     UserID = Column(Integer, primary_key=True)

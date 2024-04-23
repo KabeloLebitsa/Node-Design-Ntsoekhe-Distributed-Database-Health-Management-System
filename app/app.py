@@ -55,21 +55,27 @@ def login_page():
     return render_template('login.html')
 
 # Login route
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return render_template('dashboard.html')  # Redirect to dashboard if already logged in
+        return redirect(url_for('dashboard'))  # Redirect to dashboard if already logged in
 
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        print(request.form)  # Debug: print form data to console
+        username = request.form.get('username')  # Use .get() to avoid KeyError
+        password = request.form.get('password')
+
+        if not username or not password:
+            flash('Please enter both username and password.')
+            return redirect(url_for('login_page'))
+
         user = database.authenticate_user(username, password)
         if not user:
             flash('Invalid username or password')
-            return redirect(url_for('login'))
+            return redirect(url_for('login_page'))
 
         login_user(user)
-        return redirect(url_for('dashboard'))  # Redirect to dashboard after successful login
+        return redirect(url_for('dashboard'))
 
     return render_template('login.html')
 
