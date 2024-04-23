@@ -2,7 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Patient, Doctor
+from models import Base, Patient, Doctor, User
 from connection_pool import create_connection_pool
 
 pool = create_connection_pool()
@@ -79,3 +79,24 @@ def delete_doctor(doctor_id):
     with get_db() as db:
         if doctor := db.query(Doctor).get(doctor_id):
             db.delete(doctor)
+
+def authenticate_user(username, password):
+        """
+        This function authenticates a user based on username and password.
+
+        Args:
+            username (str): Username provided by the user during login.
+            password (str): Password provided by the user during login.
+
+        Returns:
+            User object: Returns the User object if authentication is successful, otherwise None.
+        """
+        with get_db() as db:
+            if user := db(User).query.filter_by(username).first():
+                    # Check stored password against provided password
+                return None if user.Password != password else user
+            else:
+                return None
+def load_user(user_id):
+    with get_db() as db:
+        return db.query(User).get(int(user_id))

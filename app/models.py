@@ -107,3 +107,4 @@ class User(Base, UserMixin):
 
     def __repr__(self):
         return f"<User(Username={self.Username}, Role={self.Role})>"
+
