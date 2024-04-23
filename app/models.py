@@ -1,5 +1,6 @@
 # models.py
 
+from flask_login import UserMixin
 from sqlalchemy import Column, Float, Integer, String, Text, Date, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -91,7 +92,7 @@ class Billing(Base):
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)
 
-class User(Base):
+class User(Base, UserMixin):
     __tablename__ = 'users'
 
     UserID = Column(Integer, primary_key=True)
@@ -106,3 +107,18 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(Username={self.Username}, Role={self.Role})>"
+    
+    def __init__(self, user_id, username, password, role):
+        self.id = user_id
+        self.username = username
+        self.password = password
+        self.role = role  # List of user roles (e.g., "admin", "doctor")
+
+    def verify_password(self, password):
+        return (self.password == password)
+
+    # user authentication logic 
+    def authenticate(self, username, password):
+        usr = self.username
+        user = User.query.filter_by(usr==username).first()
+        return user if user and self.verify_password(password) else None
