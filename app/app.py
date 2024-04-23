@@ -1,9 +1,10 @@
 #app.py
 
-from flask import Flask, redirect, render_template, request, url_for, jsonify
+from flask import Flask, redirect, render_template, request, url_for, jsonify, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from models import User 
 from config import app_config 
+from sqlalchemy.orm import query
 
 # Application configuration
 app = Flask(__name__)
@@ -50,7 +51,7 @@ def get_user_info():
 # User loader function for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return query(User).get(int(user_id))
 # Login page route
 @app.route('/loginpage')
 def login_page():
@@ -59,16 +60,22 @@ def login_page():
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  if current_user.is_authenticated:
-    return redirect(url_for('dashboard'))
-  username = request.form.get('username')
-  password = request.form.get('password')
-
-  user = User.query.filter_by(username=username).first()
-  if user and user.check_password(password):
-    login_user(user)
-    return redirect(url_for('dashboard'))
-  return 'Invalid username or password'
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = query(User).filter_by(Username=username).first()
+        if user is not None and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('dashboard'))  # Redirect to a dashboard or home page
+        else:
+            flash('Invalid username or password')
+    return render_template('login.html')
+# Logout route
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 '''def validate_inputs(username, password):
   # Check if the username and password are not empty
@@ -85,13 +92,6 @@ def login():
   if not any(char.isdigit() for char in password):
       return False
   return any((char.isupper() for char in password))'''
-
-# Logout route
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login_page'))
 
 # Main function
 if __name__ == '__main__':

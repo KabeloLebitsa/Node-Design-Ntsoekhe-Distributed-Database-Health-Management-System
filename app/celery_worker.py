@@ -3,14 +3,14 @@
 import database 
 import aiohttp
 import asyncio
-from config import Config
+from config import app_config
 from celery import Celery
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 
 # Configure Celery Broker and Backend (replace with your configuration details)
 app = Celery('tasks', broker='amqp://localhost:8089', backend='redis://localhost:8090')
 
-app.config.from_object('config')
+app.config.from_object(app_config)
 OTHER_NODES = app.config['OTHER_NODES']
 
 # Optional: Automatically create tables on Celery worker startup
