@@ -14,6 +14,17 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Home page route
+@app.route('/')
+def index():
+    return render_template('index.html')
+# Dashboard route
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
+
+# User info route
 @app.route('/user/info', methods=['GET'])
 @login_required
 def get_user_info():
@@ -69,16 +80,6 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Home page route
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Dashboard route
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    return render_template('dashboard.html')
-
+# Main function
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
