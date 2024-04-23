@@ -12,7 +12,7 @@ app.config.from_object('config')
 # Flask-Login configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login.html'
 
 # Home page route
 @app.route('/')
@@ -42,7 +42,7 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('/dashboard'))
+        return render_template('dashboard.html')
     username = request.form.get('username')
     password = request.form.get('password')
     
@@ -52,7 +52,7 @@ def login():
     try:
         if user := Users.authenticate(username, password):
             login_user(user)
-            return redirect(url_for('/dashboard'))
+            return render_template('dashboard.html')
         return 'Invalid username or password'
     except Exception as e:
         return f'An error occurred: {str(e)}'
@@ -78,7 +78,7 @@ def validate_inputs(username, password):
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return render_template('login.html')
 
 # Main function
 if __name__ == '__main__':
