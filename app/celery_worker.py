@@ -8,9 +8,9 @@ from celery import Celery
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 
 # Configure Celery Broker and Backend (replace with your configuration details)
-app = Celery('tasks', broker='amqp://localhost:5672', backend='redis://localhost:6379')
+app = Celery('tasks', broker='amqp://localhost:8089', backend='redis://localhost:8090')
 
-app.config.from_object(Config)
+app.config.from_object('config')
 OTHER_NODES = app.config['OTHER_NODES']
 
 # Optional: Automatically create tables on Celery worker startup
@@ -209,19 +209,3 @@ def update_doctor(doctor_id, new_data):
 # Similar tasks for CRUD operations on other models (Doctor, Nurse, etc.)
 # Implement functions for Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing
 # following the same pattern as the patient examples.
-
-
-# Example usage (assuming you have a message queue configured)
-# You can call these tasks from another application or script
-
-# patient_data = {'name': 'John Doe', 'dob': '1980-01-01', ...}
-# result = add_patient.delay(patient_data)
-# patient_id = result.wait()
-# print(f"Successfully added patient with ID: {patient_id}")
-
-# Get all patients
-# result = get_patients.delay()
-# patients = result.wait()
-# print(f"Total Patients: {len(patients)}")
-
-# ... similar usage for other tasks

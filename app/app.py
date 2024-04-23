@@ -2,16 +2,20 @@
 
 from flask import Flask, redirect, render_template, request, url_for, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from models import User  
+from models import User 
+from config import app_config 
 
 # Application configuration
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_object(app_config)
 
 # Flask-Login configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'templates/login.html'
+login_manager.login_view = 'login'
+
+# Optionally set the template folder explicitly (if needed)
+# app.template_folder = 'app/templates'
 
 # Home page route
 @app.route('/')
@@ -36,6 +40,10 @@ def get_user_info():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+# Login page route
+@app.route('/loginpage')
+def login_page():
+    return render_template('login.html')
 
 # Login route
 @app.route('/login', methods=['GET', 'POST'])

@@ -4,6 +4,7 @@ celery
 aiohttp
 asyncio
 dbutils
+secrets
 requests
 werkzeug
 sqlalchemy
