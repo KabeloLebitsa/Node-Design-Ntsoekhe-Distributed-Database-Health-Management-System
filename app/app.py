@@ -12,7 +12,7 @@ app.config.from_object('config')
 # Flask-Login configuration
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login.html'
+login_manager.login_view = 'login'
 
 @app.route('/user/info', methods=['GET'])
 @login_required
@@ -76,9 +76,9 @@ def index():
 
 # Dashboard route
 @app.route('/dashboard')
+@login_required
 def dashboard():
     return render_template('dashboard.html')
 
 if __name__ == '__main__':
-    port = app.config.get('PORT', 5000)
-    app.run(debug=False, host='127.0.0.1', port=port)
+    app.run(debug=True, host='0.0.0.0', port=5000)
