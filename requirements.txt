@@ -1,10 +1,2 @@
 requests==2.26.0
 flask
-celery
-aiohttp
-asyncio
-dbutils
-requests
-werkzeug
-sqlalchemy
-Flask-Login
