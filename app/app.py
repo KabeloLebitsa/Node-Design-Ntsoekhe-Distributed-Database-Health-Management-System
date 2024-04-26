@@ -101,31 +101,27 @@ app.route('/dashboard/admin')(create_dashboard_route('admin'))
 app.route('/dashboard/doctors')(create_dashboard_route('doctor'))
 app.route('/dashboard/patients')(create_dashboard_route('patient'))
 
-# Display patients page route (assuming functionality in the API)
+# Display patients page route 
 @app.route('/display/patients')
 @login_required
 def display_patients():
-    flash('Use the API endpoint to retrieve patient data.')
     return render_template('display_patients.html')
 
-# Create user page route (assuming functionality in the API)
+# Create user page route 
 @app.route('/create/users')
 @login_required
 def create_user():
-    flash('Use the API endpoint to create new patients.')
     return render_template('create_user.html')
 
 # Create patients page route 
 @app.route('/create/patients')
 @login_required
 def create_patient():
-    flash('Use the API endpoint to create new patients.')
     return render_template('create_patient.html')
 # Create doctors page route 
 @app.route('/create/doctors')
 @login_required
 def create_doctor():
-    flash('Use the API endpoint to create new doctors.')
     return render_template('create_doctor.html')
 # Main function
 if __name__ == '__main__':
