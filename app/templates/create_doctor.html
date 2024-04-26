@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Patient</title>
+    <title>Create Doctor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -57,21 +57,34 @@
     </style>
 </head>
 <body>
-    <h1>Create New Patient</h1>
-    <form id="CreatePatientForm">
+    <h1>Create New Doctor</h1>
+    <form id="CreateDoctorForm">
         <input type="text" id="Name" placeholder="Full Name" required>
-        <input type="date" id="DateOfBirth" placeholder="Date of Birth" required>
-        <select id="Gender" required>
-        <option value="" disabled selected>Select Gender</option> 
-        <option value="Male">Male</option> 
-        <option value="Female">Female</option>
+        <input type="numeric" id="PhoneNumber" placeholder="Phone Number" required>
+        <select id="Specializaton" required>
+        <option value="" disabled selected>Select Specializaton</option> 
+        <option value="Cardiology">Cardiology</option> 
+        <option value="Oncology">Oncology</option>
+        <option value="Radiology">Radiology</option> 
+        <option value="Psychiatry">Psychiatry</option>
+        <option value="Pediatrics">Pediatrics</option> 
+        <option value="Neurology">Neurology</option>
         </select>
-        <input type="text" id="PhoneNumber" placeholder="Phone Number" required>
-        <button type="submit">Create Patient</button>
+        <select id="Department" required>
+        <option value="" disabled selected>Select Department</option> 
+        <option value="Emergency">Emergency</option> 
+        <option value="Surgery">Surgery</option>
+        <option value="Gynecology">Gynecology</option>
+        <option value="Pediatrics">Pediatrics</option>
+        <option value="Radiology">Radiology</option>
+        <option value="Pathology">Pathology</option>
+        <option value="Neurology">Neurology</option>
+        </select>
+        <button type="submit">Create Doctor</button>
     </form>
 
     <script>
-        document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+        document.getElementById("CreateDoctorForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent the default form submission
 
             var formData = new FormData(this);
@@ -82,7 +95,7 @@
             }
 
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/create/patients");
+            xhr.open("POST", "/doctors/create");
             xhr.setRequestHeader("Content-Type", "application/json");
             xhr.onload = function() {
                 if (xhr.status >= 200 && xhr.status < 300) {

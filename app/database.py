@@ -1,110 +1,124 @@
-#database.py
+# database.py
 
-import sqlite3
+import requests
+from config import Config
+from flask_login import login_user
+from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import QueuePool
 from models import Base, Patient, Doctor, User
-#from connection_pool import create_connection_pool
 
-DATABASE_URL = 'ntsoekhe.db'
-pool = QueuePool(creator=sqlite3.connect(DATABASE_URL),  # Use sqlite3.connect as the creator
-                  pool_size=10,
-                  max_overflow=0)
+# Database manager class
+class DatabaseManager:
+    def __init__(self):
+        self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
+        self.OTHER_NODES = Config.OTHER_NODES
 
-engine = create_engine(DATABASE_URL, pool=pool)  # Explicitly set the pool
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    def get_session(self):
+        # Create a new engine and sessionmaker each time
+        engine = create_engine(self.DATABASE_URL)
+        Session = sessionmaker(bind=engine)
+        return Session()
 
+    @contextmanager
+    def get_db(self):
+        db = self.get_session()
+        try:
+            yield db
+        finally:
+            db.close()
 
+    def ensure_admin_user(self):
+        with self.get_db() as db:
+            admin_user = db.query(User).filter(User.Role == 'admin').one_or_none()
+            if not admin_user:
+                new_admin = User(Username='admin', Password='admin123', Role='admin') 
+                db.add(new_admin)
+                db.commit()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
+    def load_user(self, user_id):
+        with self.get_db() as db:
+            return db.query(User).get(user_id)
+
+    def insert_user(self, user):
+        with self.get_db() as db:
+            db.add(user)
         db.commit()
-    except:
-        db.rollback()
-        raise
-    finally:
-        db.close()
 
-def create_all_tables():
-    Base.metadata.create_all(bind=engine)
+    def insert_patient(self, patient):
+        with self.get_db() as db:
+            db.add(patient)
+        db.commit()
 
-# Functions to interact with the database using models
-def insert_user(user):
-    with get_db() as db:
-        db.merge(user)
+    def delete_patient(self, patient_id):
+        with self.get_db() as db:
+            if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
+                db.delete(patient)
+        db.commit()
 
-def insert_patient(patient):
-    with get_db() as db:
-        db.merge(patient)
+    def update_patient(self, patient_id, new_data):
+        with self.get_db() as db:
+            if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
+                for key, value in new_data.items():
+                    setattr(patient, key, value)
+        db.commit()
 
-def delete_patient(patient_id):
-    with get_db() as db:
-        if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
-            db.delete(patient)
+    def get_all_patients(self):
+        with self.get_db() as db:
+            return db.query(Patient).all()
 
-def update_patient(patient_id, new_data):
-    with get_db() as db:
-        if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
-            for key, value in new_data.items():
-                setattr(patient, key, value)
+    def get_patient_by_id(self, patient_id):
+        with self.get_db() as db:
+            return db.query(Patient).filter(Patient.id == patient_id).one_or_none()
 
-def get_all_patients():
-    with get_db() as db:
-        return db.query(Patient).all()
+    def insert_doctor(self, doctor):
+        with self.get_db() as db:
+            db.add(doctor)
+        db.commit()
 
-def get_patient_by_id(patient_id):
-    with get_db() as db:
-        return db.query(Patient).filter(Patient.id == patient_id).one_or_none()
+    def update_doctor(self, doctor_id, new_data):
+        with self.get_db() as db:
+            if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
+                for key, value in new_data.items():
+                    setattr(doctor, key, value)
+        db.commit()
 
-def insert_doctor(doctor):
-    with get_db() as db:
-        db.merge(doctor)
+    def get_all_doctors(self):
+        with self.get_db() as db:
+            return db.query(Doctor).all()
 
-def update_doctor(doctor_id, new_data):
-    with get_db() as db:
-        if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
-            for key, value in new_data.items():
-                setattr(doctor, key, value)
+    def get_doctor_by_id(self, doctor_id):
+        with self.get_db() as db:
+            return db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none()
 
-def get_all_doctors():
-    with get_db() as db:
-        return db.query(Doctor).all()
+    def delete_doctor(self, doctor_id):
+        with self.get_db() as db:
+            if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
+                db.delete(doctor)
+        db.commit() 
 
-def get_doctor_by_id(doctor_id):
-    with get_db() as db:
-        return db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none()
-
-def delete_doctor(doctor_id):
-    with get_db() as db:
-        if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
-            db.delete(doctor)
-
-def authenticate_user(username, password):
-    """
-    This function authenticates a user based on username and password.
-
-    Args:
-        username (str): Username provided by the user during login.
-        password (str): Password provided by the user during login.
-
-    Returns:
-        User object: Returns the User object if authentication is successful, otherwise None.
-    """
-    try:
-        with get_db() as db:
-            if u_password := db.query(User.Password).filter_by(username).scalar():
-                # Check stored password against provided password
-                return None if u_password != password else db.query(User).filter_by(username).first()
-            else:
+    def authenticate_user(self, username, password):
+        try:
+            with self.get_db() as db:
+                user = db.query(User).filter(User.Username == username).one_or_none()
+                if user and user.Password == password:
+                    user.IsAuthenticated = True
+                    user.IsActive = True
+                    user.IsAnonymous = False
+                    login_user(user)
+                    return user
+                else:
+                    print("Invalid username or password.")
                 return None
-    except Exception as e:
-        # Handle database errors
-        print(f"Error occurred during authentication: {e}")
-        return None
+        except Exception as e:
+            # Handle database errors
+            print(f"Error occurred during authentication: {e}")
+            return None
 
-def load_user(user_id):
-    with get_db() as db:
-        return db.query(User).get(user_id)
+    def replicate_data(self, action, data):
+        for node in self.OTHER_NODES:
+            try:
+                response = requests.post(f"https://{node}/replicate-{action}", json=data)
+                response.raise_for_status()  # Raise exception for non-2xx response codes
+            except requests.exceptions.RequestException as e:
+                print(f"Error replicating data to node {node}: {e}")

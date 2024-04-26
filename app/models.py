@@ -1,9 +1,7 @@
 # models.py
 
-from flask_login import UserMixin
-from sqlalchemy import Column, Float, Integer, String, Text, Date, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, Float, Integer, String, Text, Date, ForeignKey
+from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
 
@@ -14,9 +12,9 @@ class Patient(Base):
     Name = Column(String)
     DateOfBirth = Column(Date)
     Gender = Column(String)
-    ContactInformation = Column(String)
-    InsuranceInformation = Column(String)
-
+    PhoneNumber = Column(Integer, unique=True)
+    #needs_replication = Column(Boolean, default=True)
+    
     appointments = relationship("Appointment", backref='patient')
     medical_records = relationship("MedicalRecord", backref='patient')
     prescriptions = relationship("Prescription", backref='patient')
@@ -28,9 +26,10 @@ class Doctor(Base):
     DoctorID = Column(Integer, primary_key=True)
     Name = Column(String)
     Specialization = Column(String)
-    ContactInformation = Column(String)
+    PhoneNumber = Column(Integer, unique=True)
     DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
-
+    #needs_replication = Column(Boolean, default=True)
+    
     appointments = relationship("Appointment", backref='doctor')
     medical_records = relationship("MedicalRecord", backref='doctor')
     prescriptions = relationship("Prescription", backref='doctor')
@@ -40,9 +39,10 @@ class Nurse(Base):
 
     NurseID = Column(Integer, primary_key=True)
     Name = Column(String)
-    ContactInformation = Column(String)
+    PhoneNumber = Column(Integer, unique=True)
     DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
-
+    #needs_replication = Column(Boolean, default=True)
+    
 class Department(Base):
     __tablename__ = 'departments'
 
@@ -62,7 +62,7 @@ class Appointment(Base):
     DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
     AppointmentDateTime = Column(Date)
     Purpose = Column(String)
-
+    #needs_replication = Column(Boolean, default=True)
 class MedicalRecord(Base):
     __tablename__ = 'medical_records'
 
@@ -72,7 +72,7 @@ class MedicalRecord(Base):
     DateOfVisit = Column(Date)
     Diagnosis = Column(Text)
     TreatmentPlan = Column(Text)
-
+    #needs_replication = Column(Boolean, default=True)
 class Prescription(Base):
     __tablename__ = 'prescriptions'
 
@@ -82,7 +82,7 @@ class Prescription(Base):
     Medication = Column(String)
     Dosage = Column(String)
     Instructions = Column(Text)
-
+    #needs_replication = Column(Boolean, default=True)
 class Billing(Base):
     __tablename__ = 'billings'
 
@@ -91,6 +91,9 @@ class Billing(Base):
     TotalCost = Column(Float)  
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)
+    #needs_replication = Column(Boolean, default=True)
+
+from flask_login import UserMixin
 
 class User(Base):
     __tablename__ = 'users'
@@ -99,12 +102,30 @@ class User(Base):
     Username = Column(String, unique=True, nullable=False)
     Password = Column(String, nullable=False)
     Role = Column(String, nullable=False)
+    IsActive = Column(Boolean, default=False)
+    IsAuthenticated = Column(Boolean, default=False)
+    IsAnonymous = Column(Boolean, default=False)
+
     PatientID = Column(Integer, ForeignKey('patients.PatientID'), nullable=True)
     DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'), nullable=True)
 
     patient = relationship("Patient", backref="user", foreign_keys=[PatientID], primaryjoin="and_(User.PatientID==Patient.PatientID, User.Role=='patient')")
     doctor = relationship("Doctor", backref="user", foreign_keys=[DoctorID], primaryjoin="and_(User.DoctorID==Doctor.DoctorID, User.Role=='doctor')")
 
+    def get_id(self):
+        return str(self.UserID)  
+
+    @property
+    def is_authenticated(self):
+        return self.IsAuthenticated
+
+    @property
+    def is_active(self):
+        return self.IsActive
+
+    @property
+    def is_anonymous(self):
+        return self.IsAnonymous
+
     def __repr__(self):
         return f"<User(Username={self.Username}, Role={self.Role})>"
-

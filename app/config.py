@@ -3,8 +3,8 @@
 import os
 
 class Config:
+    SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
     SECRET_KEY = os.urandom(32)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///ntsoekhe.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OTHER_NODES = [
         'https://172.0.0.1:8081',
@@ -23,14 +23,19 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     pass  # Add production-specific configurations here (e.g., logging, security)
 
+def get_app_config(environment):
+    if environment == 'development':
+        return DevelopmentConfig
+    elif environment == 'testing':
+        return TestingConfig
+    elif environment == 'production':
+        return ProductionConfig
+    else:
+        raise InvalidEnvironmentError(f'Invalid environment: {environment}')
+
+class InvalidEnvironmentError(Exception):
+    pass
+
 # Choose the appropriate configuration based on the environment
 environment = os.environ.get('FLASK_ENV', 'development')  # Default to development
-
-if environment == 'development':
-    app_config = DevelopmentConfig
-elif environment == 'testing':
-    app_config = TestingConfig
-elif environment == 'production':
-    app_config = ProductionConfig
-else:
-    raise Exception(f'Invalid environment: {environment}')
+app_config = get_app_config(environment)

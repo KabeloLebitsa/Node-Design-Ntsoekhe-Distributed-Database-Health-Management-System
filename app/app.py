@@ -1,83 +1,135 @@
-#app.py
+# app.py
 
-import database
-from celery_worker import app
-from flask import redirect, render_template, request, url_for, jsonify, flash
-from flask_login import login_required, login_user, logout_user, current_user  
+import flask
+import os
+from config import app_config
+from flask import Flask, redirect, render_template, request, url_for, flash, jsonify
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user  
+from database import DatabaseManager
+from models import User
 
+db_manager = DatabaseManager()
+
+app = Flask(__name__)
+app.config.from_object(app_config)
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login_page'
+
+
+# Required: Automatically ensure there is an admin user on App worker startup
+db_manager.ensure_admin_user()
+def create_dashboard_route(role):
+    if role not in ['admin', 'doctor', 'patient']:
+        raise ValueError('Invalid role')
+    
+    def dashboard():
+        return render_template(f"{role}_dashboard.html")
+    dashboard.__name__ = f"{role}_dashboard"  # Set a unique function name based on the role
+    return dashboard
+
+@app.route('/user/info')
+@login_required
+def user_info():
+    user_id = current_user.id
+    with db_manager.get_db() as db:
+        user = db.query(User).get(user_id)
+        if not user:
+            flask.abort(404, description="User not found")
+        user_data = {
+            "id": user.id,
+            "username": user.username,
+            "role": user.role
+        }
+    return jsonify(user_data)
+
+@login_manager.user_loader
+def load_user(user_id):
+    with db_manager.get_db() as db:
+        return db.query(User).get(int(user_id))
 
 # Home page route
 @app.route('/')
 def index():
     return render_template('index.html')
-# Display patients page route
-@app.route('/displaypatients')
-@login_required
-def display_patients():
-    return render_template('display_patients.html')
-# Create patients page route
-@login_required
-@app.route('/createpatient')
-def create_patient():
-    return render_template('create_patient.html')
 
-# Dashboard route
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    return render_template('dashboard.html')
 
-# User info route
-@app.route('/userinfo', methods=['GET'])
-@login_required
-def get_user_info():
-  """
-  This function retrieves the currently logged-in user's information.
-  """
-  return jsonify({'User': {'Username': current_user.Username, 'Role': current_user.Role}})
-
-# User loader function for Flask-Login
+# User loader function for Flask-Login (using imported function)
 @app.login_manager.user_loader
-def load_user(user_id):
-    return database.load_user(user_id)
+def load_user_route(user_id):
+    return db_manager.load_user(user_id)  # Call the imported function
+
 
 # Login page route
-@app.route('/loginpage')
+@app.route('/login_page')
 def login_page():
     return render_template('login.html')
 
-# Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))  # Redirect to dashboard if already logged in
+    if request.method != 'POST':
+        return render_template('login.html')
 
-    if request.method == 'POST':
-        print(request.form)  # Debug: print form data to console
-        username = request.form.get('username')  # Use .get() to avoid KeyError
-        password = request.form.get('password')
+    username = request.form.get('Username', '')
+    password = request.form.get('Password', '')
 
-        if not username or not password:
-            flash('Please enter both username and password.')
-            return redirect(url_for('login_page'))
+    if not username or not password:
+        flask.abort(400)
 
-        user = database.authenticate_user(username, password)
-        if not user:
-            flash('Invalid username or password')
-            return redirect(url_for('login_page'))
-
-        login_user(user)
-        return redirect(url_for('dashboard'))
-
-    return render_template('login.html')
+    user = db_manager.authenticate_user(username, password)
+    if not user:
+        flask.abort(401)
+    login_user(user)
+    # User authenticated, proceed with logic using refreshed current_user
+    role_dashboard_urls = {
+        'admin': 'admin_dashboard',
+        'doctor': 'doctor_dashboard',
+        'patient': 'patient_dashboard'
+    }
+    return jsonify({'redirect': url_for(role_dashboard_urls[current_user.Role])})
 
 # Logout route
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('login_page'))
 
+# Dashboard routes (using helper function)
+app.route('/dashboard/admin')(create_dashboard_route('admin'))
+app.route('/dashboard/doctors')(create_dashboard_route('doctor'))
+app.route('/dashboard/patients')(create_dashboard_route('patient'))
+
+# Display patients page route (assuming functionality in the API)
+@app.route('/display/patients')
+@login_required
+def display_patients():
+    flash('Use the API endpoint to retrieve patient data.')
+    return render_template('display_patients.html')
+
+# Create user page route (assuming functionality in the API)
+@app.route('/create/users')
+@login_required
+def create_user():
+    flash('Use the API endpoint to create new patients.')
+    return render_template('create_user.html')
+
+# Create patients page route 
+@app.route('/create/patients')
+@login_required
+def create_patient():
+    flash('Use the API endpoint to create new patients.')
+    return render_template('create_patient.html')
+# Create doctors page route 
+@app.route('/create/doctors')
+@login_required
+def create_doctor():
+    flash('Use the API endpoint to create new doctors.')
+    return render_template('create_doctor.html')
 # Main function
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_mode = os.environ.get('DEBUG_MODE', 'True').lower() in ['true', '1', 't']
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host=host, port=port, debug=debug_mode)

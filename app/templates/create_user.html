@@ -61,95 +61,78 @@
 </head>
     <body>
     <h1>Create New User</h1>
-    <form id="create-user-form">
+    <form id="createUserForm">
         <input type="text" id="username" name="username" placeholder="Username" required>
         <input type="password" id="password" name="password" placeholder="Password" required>
         <select id="role" required>
         <option value="" disabled selected>Select Role</option> 
-        <option id="role" value="admin" disabled>Admin</option> 
-        <option id="role" value="doctor" disabled>Doctor</option>
-        <option id="role" value="patient" disabled>Patient</option>
+        <option id="role" value="admin">Admin</option> 
+        <option id="role" value="doctor">Doctor</option>
+        <option id="role" value="patient">Patient</option>
         </select>
         <button type="submit">Create User</button>
     </form>
+    <script>
+      const roleSelect = document.getElementById('role');
+      const createUserForm = document.getElementById('createUserForm');
 
-  <script>
-    const roleSelect = document.getElementById('role');
-    const createUserForm = document.getElementById('create-user-form');
+      async function getLoggedInUserInfo() {
+          try {
+              const response = await fetch('/user/info'); 
+              if (!response.ok) {
+                  throw new Error('Failed to get user info');
+              }
+              const data = await response.json();
+              return data.user; 
+          } catch (error) {
+              console.error('Error fetching user info:', error);
+          }
+      }
 
-    async function getLoggedInUserInfo() {
-        try {
-            const response = await fetch('/userinfo'); 
-            if (!response.ok) {
-            throw new Error('Failed to get user info');
-            }
-            const data = await response.json();
-            return data.user; 
-        } catch (error) {
-            console.error('Error fetching user info:', error);
+      async function init() {
+          const user = await getLoggedInUserInfo();
+          if (user) {
+              window.loggedInUserRole = user.role; // Declare as a property of window for global scope
+              updateRoleOptions(); // Assuming this function is defined elsewhere
+          }
+      }
+      init(); // Initialize on page load
+
+      createUserForm.addEventListener("submit", async function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        if (roleSelect.selectedIndex === 0) {
+          alert("Please select a role for the user!");
+          return;
         }
-    }
+        
+        const formData = new FormData(this);
+        const jsonData = Object.fromEntries(formData.entries());
+        const selectedRole = jsonData.role;
 
-    async function init() {
-        const user = await getLoggedInUserInfo();
-        loggedInUserRole = user.role; // Update the global variable with the retrieved role
-        updateRoleOptions(); // Call the function to update role options based on user role
-    }
-    init(); // Call the init function on page load
-
-    function updateRoleOptions() {
-      if (loggedInUserRole === 'admin') {
-          // Enable all options for admin
-          for (let i = 0; i < roleSelect.children.length; i++) {
-          roleSelect.children[i].disabled = false;
-          }
-      } else if (loggedInUserRole === 'doctor') {
-          // Enable only patient option for doctor
-          roleSelect.children[3].disabled = false; // Patient option
-          for (let i = 1; i < roleSelect.children.length; i++) {
-          roleSelect.children[i].disabled = true;
-          }
-        } 
-      }
-    updateRoleOptions();
-
-    createUserForm.addEventListener("submit", function(event) {
-      event.preventDefault(); // Prevent default form submission
-
-      // Check if a role is selected before proceeding
-      if (roleSelect.selectedIndex === 0) {
-        alert("Please select a role for the user!");
-        return; // Exit the function if no role is selected
-      }
-      
-      const formData = new FormData(this);
-      const jsonData = {};
-
-      for (var pair of formData.entries()) {
-          jsonData[pair[0]] = pair[1];
-      }
-
-      const selectedRole = jsonData.role;
-
-      // Check if user has permission to create this role
-      if (loggedInUserRole === 'admin' ||
-          (loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
-          var xhr = new XMLHttpRequest();
-          xhr.open("POST", "/users");
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.onload = function() {
-          if (xhr.status >= 200 && xhr.status < 300) {
-              alert('User created successfully');
-              window.location.href = '/dashboard.html';
-          } else {
-              alert('Error creating user: ' + xhr.responseText);
-          }
-          };
-          xhr.send(JSON.stringify(jsonData));
-      } else {
-          alert('Unauthorized to create user of this role!');
-      }
-    )};
-  </script>
+        if (window.loggedInUserRole === 'admin' || (window.loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    console.error('Unexpected response:', data);
+                    alert('Login failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Unauthorized to create this type of user.');
+            }
+        } else {
+            alert('Unauthorized to create this type of user.');
+        }
+      });
+    </script>
 </body>
 </html>
