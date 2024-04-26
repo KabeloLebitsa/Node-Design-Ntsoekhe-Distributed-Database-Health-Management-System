@@ -1,6 +1,9 @@
 flask
+<<<<<<< HEAD
 dbutils
 requests
 werkzeug
 sqlalchemy
 Flask-Login
+=======
+>>>>>>> 57846e8bc2350b31ad2682a8c4683fd0e9b6813c

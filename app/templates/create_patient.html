@@ -2,38 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Patient</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
             margin: 0;
-            padding: 20px;
-            position: relative;
+            padding: 0;
+            background-color: #f1f1f1;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 15%; /* Adjust the width as needed */
+            background-color: green;
+            padding: 10px;
+            box-sizing: border-box;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            color: white;
+        }
+
+        .content {
+            width: 85%; /* Adjust the width as needed */
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         h1 {
-            color: #333333;
-            margin-bottom: 20px;
-        }
-
-        form {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        input, button {
+            color: green;
+            background-color: #f1f1f1;
             padding: 10px;
-            margin-top: 8px;
-            font-size: 17px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin-top: 0;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            border-radius: 5px;
+            padding: 6px;
+            margin-bottom: 10px;
+            width: 100%; /* Adjust the width as needed */
             box-sizing: border-box;
-            display: block;
-            width: 95%;
         }
         select {
             padding: 10px;
@@ -46,17 +56,33 @@
             width: 15%;
         }
 
-        button {
-            cursor: pointer;
-            background: #ddd;
+        input[type="submit"] {
+            border-radius: 5px;
+            padding: 5px 10px;
+            background-color: blue;
+            color: white;
+            font-size: 14px; /* Adjust the font size as needed */
+            width: fit-content;
+        }
+        
+        label {
+            font-weight: bold;
         }
 
-        button:hover {
-            background: #bbb;
+        /* Styling for the "Dashboard" link */
+        .dashboard-link {
+            background-color: green;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            display: inline-block;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+<<<<<<< HEAD
     <h1>Create New Patient</h1>
     <form id="CreatePatientForm">
         <input type="text" id="Name" placeholder="Full Name" required>
@@ -72,28 +98,87 @@
 
     <script>
         document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+=======
+    <div class="sidebar">
+        
+    </div>
+    <div class="content">
+        <h1>Create New Patient</h1>
+        <form id="patientForm" method="post">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="Name" required><br>
+            
+            <label for="dob">Date of Birth:</label>
+            <input type="date" id="dob" name="DateOfBirth" required><br>
+            
+            <label for="gender">Gender:</label>
+            <select id="gender" name="Gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select><br>
+            
+            <label for="contact">Contact Information:</label>
+            <input type="text" id="contact" name="ContactInformation" required><br>
+            
+            <label for="insurance">Insurance Information:</label>
+            <input type="text" id="insurance" name="InsuranceInformation" required><br>
+            
+            <input type="submit" value="Create">
+            <div class="dashboard-link">
+                <a href="/options">Dashboard</a>
+            </div>
+        </form>   
+    </div>
+
+    <script>
+        document.getElementById("patientForm").addEventListener("submit", function(event) {
+>>>>>>> 57846e8bc2350b31ad2682a8c4683fd0e9b6813c
             event.preventDefault(); // Prevent the default form submission
 
-            var formData = new FormData(this);
+            // Disable the submit button to prevent duplicate submissions
+            var submitButton = event.target.querySelector('input[type="submit"]');
+            submitButton.disabled = true;
+
+            // Gather the form data
+            var form = document.getElementById("patientForm");
+            var formData = new FormData(form);
             var jsonData = {};
 
+            // Convert form data to JSON format
             for (var pair of formData.entries()) {
                 jsonData[pair[0]] = pair[1];
             }
 
+            // Send the JSON data to the backend API
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "/create/patients");
             xhr.setRequestHeader("Content-Type", "application/json");
+
+            // Set up a function to handle the response
             xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    alert('Patient created successfully');
-                    window.location.href = 'create_user';
+                if (xhr.status === 201) {
+                    // Success: Patient created successfully
+                    alert("Added successfully!");
+                    form.reset(); // Reset the form after successful submission
                 } else {
-                    alert('Error creating patient: ' + xhr.responseText);
+                    // Failure: Patient creation failed
+                    alert("Failed to create.");
                 }
+                // Re-enable the submit button after response is received
+                submitButton.disabled = false;
             };
-            xhr.send(JSON.stringify(jsonData));
-        });
-    </script>
+
+            // Handle network errors
+            xhr.onerror = function() {
+                alert("Failed to create due to network error.");
+                // Re-enable the submit button in case of error
+        submitButton.disabled = false;
+    };
+
+    // Send the request
+    xhr.send(JSON.stringify(jsonData));
+});
+</script>
 </body>
 </html>
