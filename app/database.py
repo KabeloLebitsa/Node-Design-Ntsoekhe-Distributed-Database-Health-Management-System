@@ -6,7 +6,7 @@ from flask_login import login_user
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Patient, Doctor, User
+from models import Patient, Doctor, User
 
 # Database manager class
 class DatabaseManager:
