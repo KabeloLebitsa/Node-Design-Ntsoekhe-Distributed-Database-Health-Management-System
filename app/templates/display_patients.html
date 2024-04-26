@@ -116,7 +116,7 @@
                 <td>{{ patient.PhoneNumber }}</td>
                 <td>
                     <a href="/patients/update/{{ patient.PatientID }}" class="action-link update-link">Update</a> |
-                    <button class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</button>
+                    <a href="/patients/delete/{{ patient.PatientID }}"button class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</button>
                 </td>
             </tr>
             {% endfor %}
