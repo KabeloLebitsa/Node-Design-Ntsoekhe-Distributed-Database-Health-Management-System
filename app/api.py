@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from app import app
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 from database import DatabaseManager
@@ -18,7 +18,7 @@ def create_user():
 
     try:
         db_manager.insert_user(User(**user_data))
-        return jsonify({'message': 'User created successfully'}), 201
+        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
     except Exception as e:
         print(f"Error creating user: {e}")
         return jsonify({'message': 'Failed to create user'}), 500
@@ -33,7 +33,8 @@ def create_patient():
         return jsonify({'message': 'Missing patient data'}), 400
     try:
         db_manager.insert_patient(Patient(**patient_data))
-        return jsonify({'message': 'Patient created successfully'}), 201
+        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
+        
     except Exception as e:
         print(f"Error creating patient: {e}")
         return jsonify({'message': 'Failed to create patient'}), 500
@@ -87,7 +88,7 @@ def create_doctor():
 
     try:
         db_manager.insert_doctor(Doctor(**doctor_data))
-        return jsonify({'message': 'Doctor created successfully'}), 201
+        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
     except Exception as e:
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500

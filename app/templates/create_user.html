@@ -112,7 +112,7 @@
 
         if (window.loggedInUserRole === 'admin' || (window.loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
             try {
-                const response = await fetch('/login', {
+                const response = await fetch('/create/users', {
                     method: 'POST',
                     body: formData
                 });

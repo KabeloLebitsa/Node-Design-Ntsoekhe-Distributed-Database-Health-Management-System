@@ -32,7 +32,7 @@ def create_dashboard_route(role):
 @app.route('/user/info')
 @login_required
 def user_info():
-    user_id = current_user.id
+    user_id = current_user.UserID
     with db_manager.get_db() as db:
         user = db.query(User).get(user_id)
         if not user:

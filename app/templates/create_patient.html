@@ -69,31 +69,43 @@
         <input type="text" id="PhoneNumber" placeholder="Phone Number" required>
         <button type="submit">Create Patient</button>
     </form>
-
     <script>
-        document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent the default form submission
+    document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent the default form submission
 
-            var formData = new FormData(this);
-            var jsonData = {};
+    var formData = new FormData(this);
+    var jsonData = {};
 
-            for (var pair of formData.entries()) {
-                jsonData[pair[0]] = pair[1];
-            }
+    for (var pair of formData.entries()) {
+        jsonData[pair[0]] = pair[1];
+    }
 
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/create/patients");
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    alert('Patient created successfully');
-                    window.location.href = 'create_user';
-                } else {
-                    alert('Error creating patient: ' + xhr.responseText);
-                }
-            };
-            xhr.send(JSON.stringify(jsonData));
+    fetch("/create/patients", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(jsonData)
+        })
+        .then(response => response.json())
+        .then(data => {
+        if (data.error) {
+            // Handle error message
+            alert(data.error);
+        } else if (data.redirect) {
+            alert("Patient created successfully!")
+            // Redirect user only if a valid redirect URL is present
+            window.location.href = data.redirect;
+        } else {
+            // Handle unexpected response (no error or redirect)
+            console.error('Unexpected response:', data);
+            alert('Creating patient failed. Please try again.');
+        }
+        })
+        .catch(error => {
+            alert('Error creating patient: ' + error.message);
         });
+    });
     </script>
 </body>
 </html>
