@@ -1,6 +1,7 @@
 #config.py
 
 import os
+import logging
 
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
@@ -21,7 +22,24 @@ class TestingConfig(Config):
     TESTING = True
 
 class ProductionConfig(Config):
-    pass  # Add production-specific configurations here (e.g., logging, security)
+    pass 
+    LOGGING = {
+        'version': 1,
+        'format': '%(asctime)s %(levelname)s %(message)s',
+        'handlers': ['file'],
+        'loggers': {
+            'app': {
+                'level': 'INFO',
+                'handlers': ['file']
+            }
+        },
+        'file': {
+            'level': 'DEBUG',
+            'filename': 'app.log',
+            'mode': 'a'
+        }
+    }
+      # Add production-specific configurations here (e.g., logging, security)
 
 def get_app_config(environment):
     if environment == 'development':

@@ -1,5 +1,7 @@
 # database.py
 
+from sqlite3 import IntegrityError
+from flask import jsonify
 import requests
 from config import Config
 from flask_login import login_user
@@ -47,8 +49,19 @@ class DatabaseManager:
 
     def insert_patient(self, patient):
         with self.get_db() as db:
-            db.add(patient)
-        db.commit()
+            try:
+                db.add(patient)
+                db.commit()
+                return True  # Explicit return for successful insertion
+            except IntegrityError as e:
+                # Handle unique constraint violations or other data integrity issues
+                print(f"Error creating patient (data integrity): {e}")
+                return jsonify({'message': 'Failed to create patient. Duplicate data detected.'}), 409  # Specific error code for conflict
+            except Exception as e:
+                # Handle other unexpected errors
+                print(f"Error creating patient: {e}")
+                return jsonify({'message': 'Failed to create patient. Please try again.'}), 500
+
 
     def delete_patient(self, patient_id):
         with self.get_db() as db:

@@ -1,11 +1,9 @@
 from flask import Blueprint, request, jsonify
-from flask_login import login_required, current_user
-from app import app
+from flask_login import login_required
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 from database import DatabaseManager
 
 api = Blueprint('api', __name__)
-
 db_manager = DatabaseManager()
 
 # Endpoint for creating a user
@@ -15,10 +13,9 @@ def create_user():
     user_data = request.get_json()
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
-
     try:
         db_manager.insert_user(User(**user_data))
-        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
+        return jsonify({'redirect': '/dashboard/admin'}), 201
     except Exception as e:
         print(f"Error creating user: {e}")
         return jsonify({'message': 'Failed to create user'}), 500
@@ -29,15 +26,19 @@ def create_user():
 @login_required
 def create_patient():
     patient_data = request.get_json()
-    if not patient_data:
-        return jsonify({'message': 'Missing patient data'}), 400
+    required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
+
+    if missing_fields := [
+        field for field in required_fields if field not in patient_data
+    ]:
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
     try:
-        db_manager.insert_patient(Patient(**patient_data))
-        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
-        
+      db_manager.insert_patient(Patient(**patient_data))
+      return jsonify({'redirect': '/dashboard/admin'}), 201
     except Exception as e:
-        print(f"Error creating patient: {e}")
-        return jsonify({'message': 'Failed to create patient'}), 500
+      print(f"Error creating patient: {e}")
+      return jsonify({'message': 'Failed to create patient'}), 500
+
 
 
 # Endpoint for retrieving patient by ID
@@ -88,9 +89,8 @@ def create_doctor():
 
     try:
         db_manager.insert_doctor(Doctor(**doctor_data))
-        return jsonify({'redirect': app.url_for(app.role_dashboard_urls[current_user.Role])}), 201
+        return jsonify({'redirect': '/dashboard/admin'}), 201
     except Exception as e:
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 
-app.register_blueprint(api)

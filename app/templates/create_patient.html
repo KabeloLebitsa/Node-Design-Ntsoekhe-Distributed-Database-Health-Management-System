@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Patient</title>
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Patient</title>
+  <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f7f7f7;
@@ -57,55 +57,66 @@
     </style>
 </head>
 <body>
-    <h1>Create New Patient</h1>
-    <form id="CreatePatientForm">
-        <input type="text" id="Name" placeholder="Full Name" required>
-        <input type="date" id="DateOfBirth" placeholder="Date of Birth" required>
-        <select id="Gender" required>
-        <option value="" disabled selected>Select Gender</option> 
-        <option value="Male">Male</option> 
-        <option value="Female">Female</option>
-        </select>
-        <input type="text" id="PhoneNumber" placeholder="Phone Number" required>
-        <button type="submit">Create Patient</button>
-    </form>
-    <script>
-    document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent the default form submission
+  <h1>Create New Patient</h1>
+  <form id="CreatePatientForm">
+    <input type="text" id="Name" placeholder="Full Name" required>
+    <input type="date" id="DateOfBirth" placeholder="Date of Birth" required>
+    <select id="Gender" required>
+      <option value="" disabled selected>Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+    <input type="tel" id="PhoneNumber" placeholder="Phone Number" required> <button type="submit">Create Patient</button>
+  </form>
+  <script>
+  document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent default form submission
 
+    // Basic validation
+    const name = document.getElementById("Name").value.trim();
+    const dob = document.getElementById("DateOfBirth").value;
+    const gender = document.getElementById("Gender").value;
+    const phone = document.getElementById("PhoneNumber").value;
+
+    if (!name || !dob || !gender || !phone) {
+      alert("Please fill out all required fields");
+      return;
+    }
+
+    // Create FormData object
     var formData = new FormData(this);
     var jsonData = {};
 
     for (var pair of formData.entries()) {
-        jsonData[pair[0]] = pair[1];
+      jsonData[pair[0]] = pair[1];
     }
 
     fetch("/create/patients", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(jsonData)
-        })
-        .then(response => response.json())
-        .then(data => {
-        if (data.error) {
-            // Handle error message
-            alert(data.error);
-        } else if (data.redirect) {
-            alert("Patient created successfully!")
-            // Redirect user only if a valid redirect URL is present
-            window.location.href = data.redirect;
-        } else {
-            // Handle unexpected response (no error or redirect)
-            console.error('Unexpected response:', data);
-            alert('Creating patient failed. Please try again.');
-        }
-        })
-        .catch(error => {
-            alert('Error creating patient: ' + error.message);
-        });
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(jsonData)
+    })
+    .then(data => {
+      console.log(data);
+      if (data.error) {
+        alert(data.error);
+      } else if (data.redirect) {
+        alert("Patient created successfully!")
+        window.location.href = data.redirect;
+      } else if (data.message) {
+      alert(data.message);
+      else {
+        console.error('Unexpected response:', data);
+        alert('Creating patient failed. Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error creating patient: ' + error);
     });
-    </script>
+  });
+  </script>
 </body>
 </html>

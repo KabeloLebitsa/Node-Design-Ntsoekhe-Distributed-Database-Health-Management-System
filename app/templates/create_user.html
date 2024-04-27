@@ -110,7 +110,7 @@
         const jsonData = Object.fromEntries(formData.entries());
         const selectedRole = jsonData.role;
 
-        if (window.loggedInUserRole === 'admin' || (window.loggedInUserRole === 'doctor' && selectedRole === 'patient')) {
+        if (window.loggedInUserRole === 'admin') {
             try {
                 const response = await fetch('/create/users', {
                     method: 'POST',

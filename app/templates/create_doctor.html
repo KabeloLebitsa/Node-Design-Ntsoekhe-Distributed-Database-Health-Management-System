@@ -100,7 +100,7 @@
             xhr.onload = function() {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     alert('Patient created successfully');
-                    window.location.href = 'create_user';
+                    window.location.href = '/register/users';
                 } else {
                     alert('Error creating patient: ' + xhr.responseText);
                 }

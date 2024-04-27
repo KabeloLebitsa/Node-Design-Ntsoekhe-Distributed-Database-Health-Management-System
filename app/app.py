@@ -3,16 +3,18 @@
 import flask
 import os
 from config import app_config
-from flask import Flask, redirect, render_template, request, url_for, flash, jsonify
+from flask import Flask, abort, redirect, render_template, request, url_for, jsonify
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user  
 from database import DatabaseManager
 from models import User
+from api import api
 
 db_manager = DatabaseManager()
 
 app = Flask(__name__)
-app.config.from_object(app_config)
 # Initialize Flask-Login
+app.config.from_object(app_config)
+app.register_blueprint(api)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login_page'
@@ -34,14 +36,14 @@ def create_dashboard_route(role):
 def user_info():
     user_id = current_user.UserID
     with db_manager.get_db() as db:
-        user = db.query(User).get(user_id)
-        if not user:
-            flask.abort(404, description="User not found")
-        user_data = {
-            "id": user.id,
-            "username": user.username,
-            "role": user.role
-        }
+        if user := db.query(User).get(user_id):
+            user_data = {
+                "id": user.UserID,
+                "username": user.Username,
+                "role": user.Role
+            }
+        else:
+            return abort(404, description="User not found")
     return jsonify(user_data)
 
 @login_manager.user_loader
@@ -108,18 +110,18 @@ def display_patients():
     return render_template('display_patients.html')
 
 # Create user page route 
-@app.route('/create/users')
+@app.route('/register/users')
 @login_required
 def create_user():
     return render_template('create_user.html')
 
 # Create patients page route 
-@app.route('/create/patients')
+@app.route('/register/patients')
 @login_required
 def create_patient():
     return render_template('create_patient.html')
 # Create doctors page route 
-@app.route('/create/doctors')
+@app.route('/register/doctors')
 @login_required
 def create_doctor():
     return render_template('create_doctor.html')
