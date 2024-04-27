@@ -53,17 +53,13 @@ class DatabaseManager:
             try:
                 db.add(patient)
                 db.commit()
-                return True  # Explicit return for successful insertion
+                return True  
             except IntegrityError as e:
-                # Handle data integrity violations
                 raise DatabaseIntegrityError(
                     f"Error creating patient (data integrity): {e}"
                 ) from e
             except Exception as e:
-                # Handle other unexpected errors
-                print(f"Error creating patient: {e}")
-                raise  
-
+                return jsonify({"error": f"Error creating patient: {str(e)}"}), 500
 
     def delete_patient(self, patient_id):
         with self.get_db() as db:
