@@ -5,56 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Create Patient</title>
   <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            margin: 0;
-            padding: 20px;
-            position: relative;
-        }
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+    }
 
-        h1, h3 {
-            color: #333333;
-            margin-bottom: 20px;
-        }
+    h1, h3 {
+        color: #333333;
+        margin-bottom: 20px;
+    }
 
-        form {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    form {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-        input, button {
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 17px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            display: block;
-            width: 95%;
-        }
-        select {
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 17px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            display: block;
-            width: 15%;
-        }
+    input, button {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 95%;
+    }
+    select {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 15%;
+    }
 
-        button {
-            cursor: pointer;
-            background: #ddd;
-        }
+    button {
+        cursor: pointer;
+        background: #ddd;
+    }
 
-        button:hover {
-            background: #bbb;
-        }
-    </style>
+    button:hover {
+        background: #bbb;
+    }
+  </style>
 </head>
 <body>
   <h1>Create New Patient</h1>
@@ -96,12 +96,13 @@
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, Role ="patient" })
     })
     .then(response => response.json())
     .then(userData => {
       if (userData.error) {
         alert(userData.error);
+        return; // Stop if user creation fails
       } else {
         // If user is created successfully, create the patient
         fetch("/create/patients", {
@@ -109,7 +110,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ name, dob, gender, phone, role: "patient" })
+          body: JSON.stringify({ name, dob, gender, phone })
         })
         .then(response => response.json())
         .then(patientData => {

@@ -130,10 +130,10 @@ class DatabaseManager:
             print(f"Error occurred during authentication: {e}")
             return None
 
-    def replicate_data(self, action, data):
+    '''def replicate_data(self, action, data):
         for node in self.OTHER_NODES:
             try:
                 response = requests.post(f"https://{node}/replicate-{action}", json=data)
                 response.raise_for_status()  # Raise exception for non-2xx response codes
             except requests.exceptions.RequestException as e:
-                print(f"Error replicating data to node {node}: {e}")
+                print(f"Error replicating data to node {node}: {e}")'''

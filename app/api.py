@@ -1,3 +1,6 @@
+#api.py
+
+from sqlite3 import IntegrityError
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
 from exceptions import PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
@@ -17,6 +20,12 @@ def create_user():
     try:
         db_manager.insert_user(User(**user_data))
         return jsonify({'redirect': '/dashboard/admin'}), 201
+    except InvalidRequestException as e:
+        return jsonify({'message': str(e)}), 400
+    except DatabaseIntegrityError as e:
+        return jsonify({'message': str(e)}), 500
+    except InternalServerError as e:
+        return jsonify({'message': str(e)}), 500
     except Exception as e:
         print(f"Error creating user: {e}")
         return jsonify({'message': 'Failed to create user'}), 500
@@ -33,13 +42,15 @@ def create_patient():
         field for field in required_fields if field not in patient_data
     ]:
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
-    try:
-      db_manager.insert_patient(Patient(**patient_data))
-      return jsonify({'redirect': '/dashboard/admin'}), 201
-    except Exception as e:
-      print(f"Error creating patient: {e}")
-      return jsonify({'message': 'Failed to create patient'}), 500
 
+    try:
+        db_manager.insert_patient(Patient(**patient_data))
+        return jsonify({'redirect': '/dashboard/admin'}), 201
+    except IntegrityError as e:
+        return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
+    except Exception as e:
+        print(f"Error creating patient: {e}")
+        return jsonify({'message': 'Failed to create patient'}), 500
 
 
 # Endpoint for retrieving patient by ID
@@ -63,6 +74,8 @@ def update_patient(patient_id):
     try:
         db_manager.update_patient(patient_id, update_data)
         return jsonify({'message': 'Patient updated successfully'}), 200
+    except PatientNotFoundException as e:
+        return jsonify({'message': str(e)}), 404
     except Exception as e:
         print(f"Error updating patient: {e}")
         return jsonify({'message': 'Failed to update patient'}), 500
@@ -79,13 +92,10 @@ def delete_patient(patient_id):
         db_manager.delete_patient(patient_id)
         return jsonify({'message': 'Patient deleted successfully'}), 200
     except PatientNotFoundException as e:
-        # Handle specific PatientNotFound exception
         return jsonify({'message': str(e)}), 404
     except Exception as e:
-        # Catch other unexpected errors
         print(f"Error deleting patient: {e}")
         return jsonify({'message': 'Internal server error'}), 500
-
 
 
 # Endpoint for creating a doctor

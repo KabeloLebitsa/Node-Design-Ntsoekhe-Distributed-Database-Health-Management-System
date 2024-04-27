@@ -1,6 +1,5 @@
 # app.py
 
-import flask
 import os
 from config import app_config
 from flask import Flask, abort, redirect, render_template, request, url_for, jsonify
@@ -59,7 +58,7 @@ def index():
 
 # User loader function for Flask-Login (using imported function)
 @app.login_manager.user_loader
-def load_user_route(user_id):
+def load_user(user_id):
     return db_manager.load_user(user_id)  # Call the imported function
 
 
@@ -73,15 +72,12 @@ def login():
     if request.method != 'POST':
         return render_template('login.html')
 
-    username = request.form.get('Username', '')
-    password = request.form.get('Password', '')
-
-    if not username or not password:
-        flask.abort(400)
+    username = request.form['Username']
+    password = request.form['Password']
 
     user = db_manager.authenticate_user(username, password)
     if not user:
-        flask.abort(401)
+        abort(401)
     login_user(user)
     # User authenticated, proceed with logic using refreshed current_user
     role_dashboard_urls = {
@@ -125,9 +121,10 @@ def create_patient():
 @login_required
 def create_doctor():
     return render_template('create_doctor.html')
+
 # Main function
 if __name__ == '__main__':
-    debug_mode = os.environ.get('DEBUG_MODE', 'True').lower() in ['true', '1', 't']
+    debug_mode = app_config['DEBUG']
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
     app.run(host=host, port=port, debug=debug_mode)
