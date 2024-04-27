@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Patient, Doctor, User
+from exceptions import DatabaseIntegrityError
 
 # Database manager class
 class DatabaseManager:
@@ -54,13 +55,14 @@ class DatabaseManager:
                 db.commit()
                 return True  # Explicit return for successful insertion
             except IntegrityError as e:
-                # Handle unique constraint violations or other data integrity issues
-                print(f"Error creating patient (data integrity): {e}")
-                return jsonify({'message': 'Failed to create patient. Duplicate data detected.'}), 409  # Specific error code for conflict
+                # Handle data integrity violations
+                raise DatabaseIntegrityError(
+                    f"Error creating patient (data integrity): {e}"
+                ) from e
             except Exception as e:
                 # Handle other unexpected errors
                 print(f"Error creating patient: {e}")
-                return jsonify({'message': 'Failed to create patient. Please try again.'}), 500
+                raise  
 
 
     def delete_patient(self, patient_id):

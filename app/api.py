@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
+from exceptions import PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
 from database import DatabaseManager
 
@@ -67,16 +68,24 @@ def update_patient(patient_id):
         return jsonify({'message': 'Failed to update patient'}), 500
 
 
-# Endpoint for deleting patient
 @api.route('/patients/<int:patient_id>', methods=['DELETE'])
 @login_required
 def delete_patient(patient_id):
     try:
+        patient = db_manager.get_patient(patient_id)
+        if not patient:
+            return jsonify({'message': 'Patient not found'}), 404
+
         db_manager.delete_patient(patient_id)
         return jsonify({'message': 'Patient deleted successfully'}), 200
+    except PatientNotFoundException as e:
+        # Handle specific PatientNotFound exception
+        return jsonify({'message': str(e)}), 404
     except Exception as e:
+        # Catch other unexpected errors
         print(f"Error deleting patient: {e}")
-        return jsonify({'message': 'Failed to delete patient'}), 500
+        return jsonify({'message': 'Internal server error'}), 500
+
 
 
 # Endpoint for creating a doctor

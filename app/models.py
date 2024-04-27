@@ -2,6 +2,7 @@
 
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.sql import and_
 
 Base = declarative_base()
 
@@ -93,11 +94,8 @@ class Billing(Base):
     DateOfBilling = Column(Date)
     #needs_replication = Column(Boolean, default=True)
 
-from flask_login import UserMixin
-
 class User(Base):
     __tablename__ = 'users'
-
     UserID = Column(Integer, primary_key=True)
     Username = Column(String, unique=True, nullable=False)
     Password = Column(String, nullable=False)
@@ -106,12 +104,21 @@ class User(Base):
     IsAuthenticated = Column(Boolean, default=False)
     IsAnonymous = Column(Boolean, default=False)
 
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'), nullable=True)
-    DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'), nullable=True)
-
-    patient = relationship("Patient", backref="user", foreign_keys=[PatientID], primaryjoin="and_(User.PatientID==Patient.PatientID, User.Role=='patient')")
-    doctor = relationship("Doctor", backref="user", foreign_keys=[DoctorID], primaryjoin="and_(User.DoctorID==Doctor.DoctorID, User.Role=='doctor')")
-
+    # Relationships
+    patient = relationship(
+        "Patient",
+        backref="user",
+        uselist=False,  # One-to-one relationship
+        cascade="all, delete-orphan",
+        primaryjoin="and_(User.UserID==Patient.PatientID, User.Role=='patient')"
+    )
+    doctor = relationship(
+        "Doctor",
+        backref="user",
+        uselist=False,  # One-to-one relationship
+        cascade="all, delete-orphan",
+        primaryjoin="and_(User.UserID==Doctor.DoctorID, User.Role=='doctor')"
+    )
     def get_id(self):
         return str(self.UserID)  
 

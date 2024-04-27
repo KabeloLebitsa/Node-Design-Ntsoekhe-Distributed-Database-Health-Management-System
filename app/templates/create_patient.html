@@ -13,7 +13,7 @@
             position: relative;
         }
 
-        h1 {
+        h1, h3 {
             color: #333333;
             margin-bottom: 20px;
         }
@@ -59,6 +59,7 @@
 <body>
   <h1>Create New Patient</h1>
   <form id="CreatePatientForm">
+    <h3>Personal Information</h3>
     <input type="text" id="Name" placeholder="Full Name" required>
     <input type="date" id="DateOfBirth" placeholder="Date of Birth" required>
     <select id="Gender" required>
@@ -66,10 +67,14 @@
       <option value="Male">Male</option>
       <option value="Female">Female</option>
     </select>
-    <input type="tel" id="PhoneNumber" placeholder="Phone Number" required> <button type="submit">Create Patient</button>
+    <input type="tel" id="PhoneNumber" placeholder="Phone Number" required>
+    <h3>Login Information</h3>
+    <input type="text" id="Username" placeholder="Username" required>
+    <input type="password" id="Password" placeholder="Password" required>
+    <button type="submit">Create Patient</button>
   </form>
   <script>
-  document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+    document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent default form submission
 
     // Basic validation
@@ -77,44 +82,58 @@
     const dob = document.getElementById("DateOfBirth").value;
     const gender = document.getElementById("Gender").value;
     const phone = document.getElementById("PhoneNumber").value;
+    const username = document.getElementById("Username").value.trim();
+    const password = document.getElementById("Password").value;
 
-    if (!name || !dob || !gender || !phone) {
+    if (!name || !dob || !gender || !phone || !username || !password) {
       alert("Please fill out all required fields");
       return;
     }
 
-    // Create FormData object
-    var formData = new FormData(this);
-    var jsonData = {};
-
-    for (var pair of formData.entries()) {
-      jsonData[pair[0]] = pair[1];
-    }
-
-    fetch("/create/patients", {
+    // Create user first
+    fetch("/create/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(jsonData)
+      body: JSON.stringify({ username, password })
     })
-    .then(data => {
-      console.log(data);
-      if (data.error) {
-        alert(data.error);
-      } else if (data.redirect) {
-        alert("Patient created successfully!")
-        window.location.href = data.redirect;
-      } else if (data.message) {
-      alert(data.message);
-      else {
-        console.error('Unexpected response:', data);
-        alert('Creating patient failed. Please try again.');
+    .then(response => response.json())
+    .then(userData => {
+      if (userData.error) {
+        alert(userData.error);
+      } else {
+        // If user is created successfully, create the patient
+        fetch("/create/patients", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, dob, gender, phone, role: "patient" })
+        })
+        .then(response => response.json())
+        .then(patientData => {
+          if (patientData.error) {
+            alert(patientData.error);
+          } else if (patientData.redirect) {
+            alert("Patient created successfully!")
+            window.location.href = patientData.redirect;
+          } else if (patientData.message) {
+            alert(patientData.message);
+          } else {
+            console.error('Unexpected response:', patientData);
+            alert('Creating patient failed. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error creating patient: ' + error);
+        });
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('Error creating patient: ' + error);
+      alert('Error creating user: ' + error);
     });
   });
   </script>

@@ -1,112 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Doctor</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            margin: 0;
-            padding: 20px;
-            position: relative;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Doctor</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+    }
 
-        h1 {
-            color: #333333;
-            margin-bottom: 20px;
-        }
+    h1, h3 {
+        color: #333333;
+        margin-bottom: 20px;
+    }
 
-        form {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    form {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-        input, button {
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 17px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            display: block;
-            width: 95%;
-        }
-        select {
-            padding: 10px;
-            margin-top: 8px;
-            font-size: 17px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            display: block;
-            width: 15%;
-        }
+    input, button {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 95%;
+    }
+    select {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 15%;
+    }
 
-        button {
-            cursor: pointer;
-            background: #ddd;
-        }
+    button {
+        cursor: pointer;
+        background: #ddd;
+    }
 
-        button:hover {
-            background: #bbb;
-        }
-    </style>
+    button:hover {
+        background: #bbb;
+    }
+  </style>
 </head>
 <body>
-    <h1>Create New Doctor</h1>
-    <form id="CreateDoctorForm">
-        <input type="text" id="Name" placeholder="Full Name" required>
-        <input type="numeric" id="PhoneNumber" placeholder="Phone Number" required>
-        <select id="Specializaton" required>
-        <option value="" disabled selected>Select Specializaton</option> 
-        <option value="Cardiology">Cardiology</option> 
-        <option value="Oncology">Oncology</option>
-        <option value="Radiology">Radiology</option> 
-        <option value="Psychiatry">Psychiatry</option>
-        <option value="Pediatrics">Pediatrics</option> 
-        <option value="Neurology">Neurology</option>
-        </select>
-        <select id="Department" required>
-        <option value="" disabled selected>Select Department</option> 
-        <option value="Emergency">Emergency</option> 
-        <option value="Surgery">Surgery</option>
-        <option value="Gynecology">Gynecology</option>
-        <option value="Pediatrics">Pediatrics</option>
-        <option value="Radiology">Radiology</option>
-        <option value="Pathology">Pathology</option>
-        <option value="Neurology">Neurology</option>
-        </select>
-        <button type="submit">Create Doctor</button>
-    </form>
+  <h1>Create New Doctor</h1>
+  <form id="CreateDoctorForm">
+    <h3>Personal Information</h3>
+    <input type="text" id="Name" placeholder="Full Name" required>
+    <input type="numeric" id="PhoneNumber" placeholder="Phone Number" required>
+    <select id="Specialization" required>
+      <option value="" disabled selected>Select Specialization</option>
+      <option value="Cardiology">Cardiology</option>
+      <option value="Oncology">Oncology</option>
+      <option value="Radiology">Radiology</option>
+      <option value="Psychiatry">Psychiatry</option>
+      <option value="Pediatrics">Pediatrics</option>
+      <option value="Neurology">Neurology</option>
+    </select>
+    <select id="Department" required>
+      <option value="" disabled selected>Select Department</option>
+      <option value="Emergency">Emergency</option>
+      <option value="Surgery">Surgery</option>
+      <option value="Gynecology">Gynecology</option>
+      <option value="Pediatrics">Pediatrics</option>
+      <option value="Radiology">Radiology</option>
+      <option value="Pathology">Pathology</option>
+      <option value="Neurology">Neurology</option>
+    </select>
+    <h3>Login Information</h3>
+    <input type="text" id="Username" placeholder="Username" required>
+    <input type="password" id="Password" placeholder="Password" required>
+    <button type="submit">Create Doctor</button>
+  </form>
 
-    <script>
-        document.getElementById("CreateDoctorForm").addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent the default form submission
+  <script>
+document.getElementById("CreateDoctorForm").addEventListener("submit", function(event) {
+  event.preventDefault(); // Prevent default form submission
 
-            var formData = new FormData(this);
-            var jsonData = {};
+  // Basic validation (similar to create_patient.html)
+  const name = document.getElementById("Name").value.trim();
+  const phone = document.getElementById("PhoneNumber").value;
+  const specialization = document.getElementById("Specialization").value;
+  const department = document.getElementById("Department").value;
+  const username = document.getElementById("Username").value.trim();
+  const password = document.getElementById("Password").value;
 
-            for (var pair of formData.entries()) {
-                jsonData[pair[0]] = pair[1];
-            }
+  if (!name || !phone || !specialization || !department || !username || !password) {
+    alert("Please fill out all required fields");
+    return;
+  }
 
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/doctors/create");
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.onload = function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    alert('Patient created successfully');
-                    window.location.href = '/register/users';
-                } else {
-                    alert('Error creating patient: ' + xhr.responseText);
-                }
-            };
-            xhr.send(JSON.stringify(jsonData));
+  // Prepare data for user creation (explicitly set role)
+  const userData = {
+    username: username,
+    password: password,
+    role: "doctor" // Set role to "doctor" manually
+  };
+
+  // Prepare data for doctor creation
+  const doctorData = {
+    name: name,
+    phone: phone,
+    specialization: specialization,
+    department: department,
+  };
+
+  // Send user creation request first (chained promises)
+  fetch("/users/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(createdUser => {
+        if (createdUser.error) {
+        alert(createdUser.error);
+        return; // Stop if user creation fails
+        }
+
+        // User created successfully, proceed with doctor creation
+        return fetch("/doctors/create", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(doctorData)
         });
-    </script>
+    })
+    .then(response => response.json())
+    .then(responseData => {
+        if (responseData.error) {
+        alert(responseData.error);
+        } else if (responseData.redirect) {
+        alert("Doctor created successfully!");
+        window.location.href = responseData.redirect;
+        } else if (responseData.message) {
+        alert(responseData.message);
+        } else {
+        console.error('Unexpected response:', responseData);
+        alert('Creating doctor failed. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating doctor: ' + error);
+    });
+    });
+  </script>
 </body>
 </html>
