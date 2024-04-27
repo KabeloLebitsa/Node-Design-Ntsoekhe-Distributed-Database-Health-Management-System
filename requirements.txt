@@ -3,5 +3,5 @@ dbutils
 requests
 werkzeug
 sqlalchemy
-contextlib
+contextlib2
 Flask-Login
