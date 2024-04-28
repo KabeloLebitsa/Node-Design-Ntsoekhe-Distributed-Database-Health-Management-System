@@ -54,9 +54,6 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
-@app.route('/trial')
-def somefunction():
-    return('NOTHING MUCH')
 
 # User loader function for Flask-Login (using imported function)
 @app.login_manager.user_loader
