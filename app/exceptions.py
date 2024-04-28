@@ -16,3 +16,9 @@ class InternalServerError(Exception):
 
 class DatabaseIntegrityError(Exception):
     pass
+class ValueError(Exception):
+    pass
+class TypeError(Exception):
+    pass
+class Exception(Exception):
+    pass

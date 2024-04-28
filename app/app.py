@@ -96,11 +96,6 @@ app.route('/dashboard/admin')(create_dashboard_route('admin'))
 app.route('/dashboard/doctors')(create_dashboard_route('doctor'))
 app.route('/dashboard/patients')(create_dashboard_route('patient'))
 
-# Display patients page route 
-@app.route('/display/patients')
-def display_patients():
-    return render_template('display_patients.html')
-
 # Create user page route 
 @app.route('/register/users')
 def create_user():

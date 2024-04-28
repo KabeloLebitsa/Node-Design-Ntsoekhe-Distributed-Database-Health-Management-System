@@ -103,13 +103,12 @@
                 <td>{{ patient.PhoneNumber }}</td>
                 <td>
                     <a href="/patients/update/{{ patient.PatientID }}" class="action-link update-link">Update</a> |
-                    <a href="#" class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</a>
+                    <a href="/patients/delete/{{ patient.PatientID }}" class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</a>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const deleteButtons = document.querySelectorAll('.delete-link');

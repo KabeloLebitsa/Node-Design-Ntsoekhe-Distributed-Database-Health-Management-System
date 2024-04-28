@@ -1,5 +1,6 @@
 # database.py
 
+import datetime
 from sqlite3 import IntegrityError
 from flask import jsonify
 import requests
@@ -9,7 +10,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Patient, Doctor, User
-from exceptions import DatabaseIntegrityError
+from exceptions import DatabaseIntegrityError, ValueError, TypeError
 
 # Database manager class
 class DatabaseManager:
@@ -33,44 +34,69 @@ class DatabaseManager:
 
     def ensure_admin_user(self):
         with self.get_db() as db:
-            admin_user = db.query(User).filter(User.Role == 'admin').one_or_none()
+            admin_user = db.query(User).filter(User.Username == 'admin').one_or_none()
             if not admin_user:
                 new_admin = User(Username='admin', Password='admin123', Role='admin') 
                 db.add(new_admin)
-                db.commit()
+                try:
+                    db.commit()
+                except Exception as e:
+                    print(f"Error occurred during commit: {e}")
 
     def load_user(self, user_id):
         with self.get_db() as db:
             return db.query(User).get(user_id)
 
-    def insert_user(self, user):
+    def insert_user(self, user): 
         with self.get_db() as db:
             try:
-                if (
-                    existing_user := db.query(User)
-                    .filter(User.Username == user.Username)
-                    .one_or_none()
-                ):
-                    return existing_user.UserID
-                db.add(user)
+                if db.query(User).filter(User.Username == user['Username']).one_or_none():
+                    raise Exception('Username already exists')
+                username = user['Username']
+                password = user['Password']
+                role = user['Role']
+                new_user = User(username, password, role)
+                db.add(new_user)
                 db.commit()
-                return user.UserID
+                return new_user.UserID
             except Exception as e:
-                print(f"Error occurred during user insertion: {e}")
-                return None
+                raise Exception(f"Error occurred during user insertion: {e}") from e
 
     def insert_patient(self, patient):
         with self.get_db() as db:
             try:
-                db.add(patient)
+                patient_id = patient['PatientID']
+                name = patient['Name']
+                date_of_birth = datetime.datetime.strptime(patient['DateOfBirth'], '%Y-%m-%d').date()
+                gender = patient['Gender']
+                phone_number = patient['PhoneNumber']
+                
+                new_patient = Patient(patient_id, name, date_of_birth, gender, phone_number)
+                db.add(new_patient)
                 db.commit()
-                return True  
+                return new_patient.PatientID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
                     f"Error creating patient (data integrity): {e}"
                 ) from e
+            except ValueError as e:
+                raise ValueError(f"Error creating patient: {str(e)}") from e
             except Exception as e:
-                return jsonify({"error": f"Error creating patient: {str(e)}"}), 500
+                raise Exception(f"Error creating patient: {str(e)}") from e
+                
+    def insert_doctor(self, doctor):
+        with self.get_db() as db:
+            try:
+                new_doctor = Doctor(doctor)
+                db.add(new_doctor)
+                db.commit()
+                return True  
+            except IntegrityError as e:
+                raise DatabaseIntegrityError(
+                    f"Error creating doctor (data integrity): {e}"
+                ) from e
+            except Exception as e:
+                return jsonify({"error": f"Error creating doctor: {str(e)}"}), 500
 
     def delete_patient(self, patient_id):
         with self.get_db() as db:

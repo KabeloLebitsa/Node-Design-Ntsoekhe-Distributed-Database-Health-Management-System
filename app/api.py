@@ -1,7 +1,7 @@
 #api.py
 
 from sqlite3 import IntegrityError
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from flask_login import login_required
 from exceptions import PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
 from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
@@ -14,12 +14,10 @@ db_manager = DatabaseManager()
 @api.route('/create/users', methods=['POST'])
 def create_user():
     user_data = request.get_json()
-    print(f"Received user data: {user_data}")
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        user_id = db_manager.insert_user(User(**user_data))
-        print(f"Created user ID: {user_id}")
+        user_id = db_manager.insert_user(user_data)
         return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
         return jsonify({'message': str(e)}), 400
@@ -37,7 +35,6 @@ def create_user():
 @api.route('/create/patients', methods=['POST'])
 def create_patient():
     patient_data = request.get_json()
-    print(f"Received user data: {patient_data}")
     required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
 
     if missing_fields := [
@@ -46,7 +43,7 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        db_manager.insert_patient(Patient(**patient_data))
+        db_manager.insert_patient(patient_data)
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
@@ -102,13 +99,25 @@ def delete_patient(patient_id):
 @api.route('/create/doctors', methods=['POST'])
 def create_doctor():
     doctor_data = request.get_json()
-    if not doctor_data:
-        return jsonify({'message': 'Missing doctor data'}), 400
+    required_fields = ["Name", "Specialization", "PhoneNumber", "DepartmentName"]
+    conn = db_manager.get_db
+    DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['DepartmentName']).one_or_none()
+    doctor_data['DepartmentID'] = DepartmentID
+    if missing_fields := [
+        field for field in required_fields if field not in doctor_data
+    ]:
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
         db_manager.insert_doctor(Doctor(**doctor_data))
         return jsonify({'redirect': '/dashboard/admin'}), 201
+    except IntegrityError as e:
+        return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
     except Exception as e:
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 
+@api.route('/display/patients')
+def display_patients():
+  patients = db_manager.get_all_patients()
+  return render_template('display_patients.html', patients=patients)

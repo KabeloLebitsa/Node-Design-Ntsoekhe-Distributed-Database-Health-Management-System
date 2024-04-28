@@ -13,7 +13,11 @@ class User(Base):
     Role = Column(String, nullable=False) 
     IsActive = Column(Boolean, default=False)
     IsAuthenticated = Column(Boolean, default=False)
-    IsAnonymous = Column(Boolean, default=False)
+    IsAnonymous = Column(Boolean, default=False)  
+    def __init__(self, username, password, role):
+        self.Username = username
+        self.Password = password
+        self.Role = role
     def get_id(self):
         return str(self.UserID)  
 
@@ -45,7 +49,12 @@ class Patient(Base):
   medical_records = relationship("MedicalRecord", backref='patient')
   prescriptions = relationship("Prescription", backref='patient')
   billings = relationship("Billing", backref='patient')
-
+  def __init__(self, patient_id, name, date_of_birth, gender, phone_number):
+      self.PatientID = patient_id  
+      self.Name = name
+      self.DateOfBirth = date_of_birth
+      self.Gender = gender
+      self.PhoneNumber = phone_number
 class Doctor(Base):
   __tablename__ = 'doctors'
 
@@ -72,8 +81,6 @@ class Department(Base):
 
     DepartmentID = Column(Integer, primary_key=True)
     DepartmentName = Column(String)
-    DepartmentHead = Column(String)
-    Location = Column(String)
 
     doctors = relationship("Doctor", backref='department')
     nurses = relationship("Nurse", backref='department')
