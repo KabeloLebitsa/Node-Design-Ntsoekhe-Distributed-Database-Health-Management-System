@@ -123,7 +123,7 @@ class Billing(Base):
     __tablename__ = 'billings'
 
     BillingID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatinetID'))
+    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
     TotalCost = Column(Float)  
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)
