@@ -124,7 +124,7 @@ def create_doctor():
 
 # Main function
 if __name__ == '__main__':
-    debug_mode = app_config['DEBUG']
+    debug_mode = app_config.DEBUG
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
     app.run(host=host, port=port, debug=debug_mode)

@@ -2,38 +2,74 @@
 
 from sqlalchemy import Boolean, Column, Float, Integer, String, Text, Date, ForeignKey
 from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.sql import and_
 
 Base = declarative_base()
 
-class Patient(Base):
-    __tablename__ = 'patients'
+class User(Base):
+    __tablename__ = 'users'
+    UserID = Column(Integer, primary_key=True)
+    Username = Column(String, unique=True, nullable=False)
+    Password = Column(String, nullable=False)
+    Role = Column(String, nullable=False) 
+    IsActive = Column(Boolean, default=False)
+    IsAuthenticated = Column(Boolean, default=False)
+    IsAnonymous = Column(Boolean, default=False)
 
-    PatientID = Column(Integer, primary_key=True)
-    Name = Column(String)
-    DateOfBirth = Column(Date)
-    Gender = Column(String)
-    PhoneNumber = Column(Integer, unique=True)
-    #needs_replication = Column(Boolean, default=True)
-    
-    appointments = relationship("Appointment", backref='patient')
-    medical_records = relationship("MedicalRecord", backref='patient')
-    prescriptions = relationship("Prescription", backref='patient')
-    billings = relationship("Billing", backref='patient')
+    __mapper_args__ = {
+        'polymorphic_on': Role
+    }
+    def get_id(self):
+        return str(self.UserID)  
+
+    @property
+    def is_authenticated(self):
+        return self.IsAuthenticated
+
+    @property
+    def is_active(self):
+        return self.IsActive
+
+    @property
+    def is_anonymous(self):
+        return self.IsAnonymous
+
+    def __repr__(self):
+        return f"<User(Username={self.Username}, Role={self.Role})>"
+
+class Patient(Base):
+  __tablename__ = 'patients'
+
+  PatientID = Column(Integer, ForeignKey('users.UserID'), primary_key=True)
+  Name = Column(String)
+  DateOfBirth = Column(Date)
+  Gender = Column(String)
+  PhoneNumber = Column(Integer, unique=True)
+
+  appointments = relationship("Appointment", backref='patient')
+  medical_records = relationship("MedicalRecord", backref='patient')
+  prescriptions = relationship("Prescription", backref='patient')
+  billings = relationship("Billing", backref='patient')
+
+  __mapper_args__ = {
+      'polymorphic_identity': 'patient'
+  }
 
 class Doctor(Base):
-    __tablename__ = 'doctors'
+  __tablename__ = 'doctors'
 
-    DoctorID = Column(Integer, primary_key=True)
-    Name = Column(String)
-    Specialization = Column(String)
-    PhoneNumber = Column(Integer, unique=True)
-    DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
-    #needs_replication = Column(Boolean, default=True)
-    
-    appointments = relationship("Appointment", backref='doctor')
-    medical_records = relationship("MedicalRecord", backref='doctor')
-    prescriptions = relationship("Prescription", backref='doctor')
+  DoctorID = Column(Integer, ForeignKey('users.UserID'), primary_key=True)  
+  Name = Column(String)
+  Specialization = Column(String)
+  PhoneNumber = Column(Integer, unique=True)
+  DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
+
+  appointments = relationship("Appointment", backref='doctor')
+  medical_records = relationship("MedicalRecord", backref='doctor')
+  prescriptions = relationship("Prescription", backref='doctor')
+
+  __mapper_args__ = {
+      'polymorphic_identity': 'doctor'
+  }
 
 class Nurse(Base):
     __tablename__ = 'nurses'
@@ -42,7 +78,6 @@ class Nurse(Base):
     Name = Column(String)
     PhoneNumber = Column(Integer, unique=True)
     DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
-    #needs_replication = Column(Boolean, default=True)
     
 class Department(Base):
     __tablename__ = 'departments'
@@ -88,51 +123,7 @@ class Billing(Base):
     __tablename__ = 'billings'
 
     BillingID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
+    PatientID = Column(Integer, ForeignKey('patients.PatinetID'))
     TotalCost = Column(Float)  
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)
-    #needs_replication = Column(Boolean, default=True)
-
-class User(Base):
-    __tablename__ = 'users'
-    UserID = Column(Integer, primary_key=True)
-    Username = Column(String, unique=True, nullable=False)
-    Password = Column(String, nullable=False)
-    Role = Column(String, nullable=False)
-    IsActive = Column(Boolean, default=False)
-    IsAuthenticated = Column(Boolean, default=False)
-    IsAnonymous = Column(Boolean, default=False)
-
-    # Relationships
-    patient = relationship(
-        "Patient",
-        backref="user",
-        uselist=False,  # One-to-one relationship
-        cascade="all, delete-orphan",
-        primaryjoin="and_(User.UserID==Patient.PatientID, User.Role=='patient')"
-    )
-    doctor = relationship(
-        "Doctor",
-        backref="user",
-        uselist=False,  # One-to-one relationship
-        cascade="all, delete-orphan",
-        primaryjoin="and_(User.UserID==Doctor.DoctorID, User.Role=='doctor')"
-    )
-    def get_id(self):
-        return str(self.UserID)  
-
-    @property
-    def is_authenticated(self):
-        return self.IsAuthenticated
-
-    @property
-    def is_active(self):
-        return self.IsActive
-
-    @property
-    def is_anonymous(self):
-        return self.IsAnonymous
-
-    def __repr__(self):
-        return f"<User(Username={self.Username}, Role={self.Role})>"

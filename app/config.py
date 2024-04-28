@@ -43,11 +43,11 @@ class ProductionConfig(Config):
 
 def get_app_config(environment):
     if environment == 'development':
-        return DevelopmentConfig
+        return DevelopmentConfig()
     elif environment == 'testing':
-        return TestingConfig
+        return TestingConfig()
     elif environment == 'production':
-        return ProductionConfig
+        return ProductionConfig()
     else:
         raise InvalidEnvironmentError(f'Invalid environment: {environment}')
 
