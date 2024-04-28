@@ -37,7 +37,7 @@ def create_user():
 @login_required
 def create_patient():
     patient_data = request.get_json()
-    print(f"Received user data: {user_data}")
+    print(f"Received user data: {patient_data}")
     required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
 
     if missing_fields := [
