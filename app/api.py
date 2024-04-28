@@ -46,7 +46,6 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        patient_data["PatientID"] = patient_data["UserID"]
         db_manager.insert_patient(Patient(**patient_data))
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
