@@ -118,7 +118,7 @@ class Prescription(Base):
     Medication = Column(String)
     Dosage = Column(String)
     Instructions = Column(Text)
-    #needs_replication = Column(Boolean, default=True)
+    
 class Billing(Base):
     __tablename__ = 'billings'
 
