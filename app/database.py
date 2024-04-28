@@ -46,7 +46,8 @@ class DatabaseManager:
     def insert_user(self, user):
         with self.get_db() as db:
             db.add(user)
-        db.commit()
+            db.commit()
+            return user
 
     def insert_patient(self, patient):
         with self.get_db() as db:

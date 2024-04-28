@@ -14,10 +14,6 @@ class User(Base):
     IsActive = Column(Boolean, default=False)
     IsAuthenticated = Column(Boolean, default=False)
     IsAnonymous = Column(Boolean, default=False)
-
-    __mapper_args__ = {
-        'polymorphic_on': Role
-    }
     def get_id(self):
         return str(self.UserID)  
 
@@ -50,10 +46,6 @@ class Patient(Base):
   prescriptions = relationship("Prescription", backref='patient')
   billings = relationship("Billing", backref='patient')
 
-  __mapper_args__ = {
-      'polymorphic_identity': 'patient'
-  }
-
 class Doctor(Base):
   __tablename__ = 'doctors'
 
@@ -66,10 +58,6 @@ class Doctor(Base):
   appointments = relationship("Appointment", backref='doctor')
   medical_records = relationship("MedicalRecord", backref='doctor')
   prescriptions = relationship("Prescription", backref='doctor')
-
-  __mapper_args__ = {
-      'polymorphic_identity': 'doctor'
-  }
 
 class Nurse(Base):
     __tablename__ = 'nurses'
@@ -108,7 +96,6 @@ class MedicalRecord(Base):
     DateOfVisit = Column(Date)
     Diagnosis = Column(Text)
     TreatmentPlan = Column(Text)
-    #needs_replication = Column(Boolean, default=True)
 class Prescription(Base):
     __tablename__ = 'prescriptions'
 

@@ -11,30 +11,33 @@ api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
 
 # Endpoint for creating a user
-@api.route('/users', methods=['POST'])
-@login_required
+@api.route('/create/users', methods=['POST'])
 def create_user():
     user_data = request.get_json()
     print(f"Received user data: {user_data}")
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        db_manager.insert_user(User(**user_data))
-        return jsonify({'redirect': '/dashboard/admin'}), 201
+        created_user = db_manager.insert_user(User(**user_data))
+        if created_user is None:
+            return jsonify({'message': 'User creation failed'}), 500
+        print(f"Created user data: {created_user}")
+        user_data = created_user.serialize()
+        return jsonify(user_data), 201
     except InvalidRequestException as e:
         return jsonify({'message': str(e)}), 400
     except DatabaseIntegrityError as e:
         return jsonify({'message': str(e)}), 500
     except InternalServerError as e:
-        return jsonify({'message': str(e)}), 500
-    except Exception as e:
         print(f"Error creating user: {e}")
         return jsonify({'message': 'Failed to create user'}), 500
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
 
 
 # Endpoint for creating a patient
 @api.route('/create/patients', methods=['POST'])
-@login_required
 def create_patient():
     patient_data = request.get_json()
     print(f"Received user data: {patient_data}")
@@ -46,6 +49,7 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
+        patient_data["PatientID"] = patient_data["UserID"]
         db_manager.insert_patient(Patient(**patient_data))
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
@@ -57,7 +61,6 @@ def create_patient():
 
 # Endpoint for retrieving patient by ID
 @api.route('/patients/<int:patient_id>', methods=['GET'])
-@login_required
 def get_patient_by_id(patient_id):
     if patient := db_manager.get_patient_by_id(patient_id):
         return jsonify(patient.serialize()), 200
@@ -67,7 +70,6 @@ def get_patient_by_id(patient_id):
 
 # Endpoint for updating patient
 @api.route('/patients/<int:patient_id>', methods=['PUT'])
-@login_required
 def update_patient(patient_id):
     update_data = request.get_json()
     if not update_data:
@@ -84,7 +86,7 @@ def update_patient(patient_id):
 
 
 @api.route('/patients/<int:patient_id>', methods=['DELETE'])
-@login_required
+
 def delete_patient(patient_id):
     try:
         patient = db_manager.get_patient(patient_id)
@@ -102,7 +104,6 @@ def delete_patient(patient_id):
 
 # Endpoint for creating a doctor
 @api.route('/create/doctors', methods=['POST'])
-@login_required
 def create_doctor():
     doctor_data = request.get_json()
     if not doctor_data:

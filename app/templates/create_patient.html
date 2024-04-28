@@ -78,14 +78,14 @@
     event.preventDefault(); // Prevent default form submission
 
     // Basic validation
-    const name = document.getElementById("Name").value.trim();
-    const dob = document.getElementById("DateOfBirth").value;
-    const gender = document.getElementById("Gender").value;
-    const phone = document.getElementById("PhoneNumber").value;
-    const username = document.getElementById("Username").value.trim();
-    const password = document.getElementById("Password").value;
+    const Name = document.getElementById("Name").value.trim();
+    const DateOfBirth = document.getElementById("DateOfBirth").value;
+    const Gender = document.getElementById("Gender").value;
+    const PhoneNumber = document.getElementById("PhoneNumber").value;
+    const Username = document.getElementById("Username").value.trim();
+    const Password = document.getElementById("Password").value;
 
-    if (!name || !dob || !gender || !phone || !username || !password) {
+    if (!Name || !DateOfBirth || !Gender || !PhoneNumber || !Username || !Password) {
       alert("Please fill out all required fields");
       return;
     }
@@ -96,7 +96,7 @@
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ username, password, Role ="patient" })
+      body: JSON.stringify({ Username, Password, Role: "patient" })
     })
     .then(response => response.json())
     .then(userData => {
@@ -104,13 +104,14 @@
         alert(userData.error);
         return; // Stop if user creation fails
       } else {
-        // If user is created successfully, create the patient
+
+        // If user is created successfully, create the patient with user ID
         fetch("/create/patients", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ name, dob, gender, phone })
+          body: JSON.stringify({ Name, DateOfBirth, Gender, PhoneNumber})
         })
         .then(response => response.json())
         .then(patientData => {
