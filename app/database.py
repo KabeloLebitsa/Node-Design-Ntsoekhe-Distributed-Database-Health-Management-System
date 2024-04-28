@@ -87,7 +87,13 @@ class DatabaseManager:
     def insert_doctor(self, doctor):
         with self.get_db() as db:
             try:
-                new_doctor = Doctor(doctor)
+                doctor_id = doctor['DocotrID']
+                name = doctor['Name']
+                specialization = doctor['Specilization']
+                phone_number = doctor['PhoneNumber']
+                department_id = doctor['DepartmentID']
+                
+                new_doctor = Doctor(doctor_id, name, specialization, phone_number, department_id)
                 db.add(new_doctor)
                 db.commit()
                 return True  
@@ -99,14 +105,46 @@ class DatabaseManager:
                 return jsonify({"error": f"Error creating doctor: {str(e)}"}), 500
 
     def delete_patient(self, patient_id):
-        with self.get_db() as db:
-            if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
-                db.delete(patient)
-        db.commit()
+        try:
+            if patient_id is None:
+                raise ValueError("Invalid patient ID")
+            with self.get_db() as db:
+                if (
+                    patient := db.query(Patient)
+                    .filter(Patient.PatientID == patient_id)
+                    .one_or_none()
+                ):
+                    db.delete(patient)
+                    db.commit()
+                    return jsonify({"message": "Deletion successful"}), 200
+                else:
+                    return jsonify({"error": "Patient not found"}), 404
+        except Exception as e:
+            print(f"Error occurred during patient deletion: {e}")
+            return jsonify({"error": str(e)}), 500
+        
+    def delete_user(self, user_id):
+        try:
+            if user_id is None:
+                raise ValueError("Invalid patient ID")
+            with self.get_db() as db:
+                if (
+                    user := db.query(User)
+                    .filter(User.UserID == user_id)
+                    .one_or_none()
+                ):
+                    db.delete(user)
+                    db.commit()
+                    return jsonify({"message": "Deletion successful"}), 200
+                else:
+                    return jsonify({"error": "User not found"}), 404
+        except Exception as e:
+            print(f"Error occurred during User deletion: {e}")
+            return jsonify({"error": str(e)}), 500
 
     def update_patient(self, patient_id, new_data):
         with self.get_db() as db:
-            if patient := db.query(Patient).filter(Patient.id == patient_id).one_or_none():
+            if patient := db.query(Patient).filter(Patient.PatientID == patient_id).one_or_none():
                 for key, value in new_data.items():
                     setattr(patient, key, value)
         db.commit()
@@ -116,8 +154,24 @@ class DatabaseManager:
             return db.query(Patient).all()
 
     def get_patient_by_id(self, patient_id):
+        if patient_id is None:
+            raise ValueError("Invalid patient ID")
         with self.get_db() as db:
-            return db.query(Patient).filter(Patient.id == patient_id).one_or_none()
+            try:
+                patient = db.query(Patient).filter(Patient.PatientID == patient_id).one_or_none()
+                if patient is None:
+                    return jsonify({"error": "Patient not found"}), 404
+                patient_dict = {
+                    'PatientID': patient.PatientID,
+                    'Name': patient.Name,
+                    'DateOfBirth': patient.DateOfBirth.strftime('%Y-%m-%d'),
+                    'Gender': patient.Gender,
+                    'PhoneNumber': patient.PhoneNumber
+                }
+                return jsonify(patient_dict), 200
+            except Exception as e:
+                print(f'Error occurred during get_patient_by_id: {e}')
+                return jsonify({"error": str(e)}), 500
 
     def insert_doctor(self, doctor):
         with self.get_db() as db:
@@ -141,7 +195,7 @@ class DatabaseManager:
 
     def delete_doctor(self, doctor_id):
         with self.get_db() as db:
-            if doctor := db.query(Doctor).filter(Doctor.id == doctor_id).one_or_none():
+            if doctor := db.query(Doctor).filter(Doctor.DoctorID == doctor_id).one_or_none():
                 db.delete(doctor)
         db.commit() 
 

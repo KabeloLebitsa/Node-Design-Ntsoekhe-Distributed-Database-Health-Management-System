@@ -68,6 +68,12 @@ class Doctor(Base):
   medical_records = relationship("MedicalRecord", backref='doctor')
   prescriptions = relationship("Prescription", backref='doctor')
 
+  def __init__(self, doctor_id, name, specializaton, phone_number, department_id):
+      self.DoctorID = doctor_id  
+      self.Name = name
+      self.Specialization = specializaton
+      self.PhoneNumber = phone_number
+      self.DepartmentID = department_id
 class Nurse(Base):
     __tablename__ = 'nurses'
 

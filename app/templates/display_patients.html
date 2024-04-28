@@ -77,8 +77,8 @@
 </head>
 <body>
     <h1>Patients</h1>
-    <form action="/search-patients" method="GET" class="search-container">
-        <input type="text" name="query" placeholder="Search...">
+    <form action="/search/patients" method="GET" class="search-container">
+        <input type="text" name="query" placeholder="Search by name">
         <button type="submit">Search</button>
     </form>
     <table>
@@ -89,7 +89,6 @@
                 <th>Date of Birth</th>
                 <th>Gender</th>
                 <th>Contact Information</th>
-                <th>Insurance Information</th>
                 <th>Actions</th>
             </tr>
         </thead>

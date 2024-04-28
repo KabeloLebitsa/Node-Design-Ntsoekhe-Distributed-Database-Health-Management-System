@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Patient Information</title>
+</head>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      position: relative;
+    }
+
+    h1, h3 {
+      color: #333333;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input, button {
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 17px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: block;
+      width: 95%;
+    }
+
+    select {
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 17px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: block;
+      width: 15%;
+    }
+
+    button {
+      cursor: pointer;
+      background: #ddd;
+    }
+
+    button:hover {
+      background: #bbb;
+    }
+    
+
+    table {
+      width: 100%; 
+      border-collapse: collapse; 
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background: #f7f7f7;
+      font-weight: bold;
+    }
+
+    td:first-child {
+      width: 30%; 
+    }
+
+    .info-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .info-list li {
+      margin-bottom: 5px;
+    }
+  </style>
+<body>
+  <body>
+  <h1>Update Patient Information</h1>
+  <hr>
+
+  <p>Patient ID: <span id="patient-id"></span></p>
+
+  <table>
+    <tr>
+      <th></th> <th>Information</th>
+    </tr>
+    <tr>
+      <th>Bills</th>
+      <td><p>View and update unpaid bills here.</p></td>
+    </tr>
+    <tr>
+      <th>Prescriptions</th>
+      <td><p>Request medication refills or view active prescriptions.</p></td>
+    </tr>
+    <tr>
+      <th>Medical Record</th>
+      <td>
+        <p>(Note: Only authorized personnel can update medical records)</p>
+        <a href="#" disabled>Update Medical Record (Authorized Only)</a>
+      </td>
+    </tr>
+    <tr>
+      <th>Appointments</th>
+      <td><p>View upcoming appointments or schedule new ones.</p></td>
+    </tr>
+  </table>
+</body>
+</html>
