@@ -18,12 +18,9 @@ def create_user():
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        created_user = db_manager.insert_user(User(**user_data))
-        if created_user is None:
-            return jsonify({'message': 'User creation failed'}), 500
-        print(f"Created user data: {created_user}")
-        user_data = created_user.serialize()
-        return jsonify(user_data), 201
+        user_id = db_manager.insert_user(User(**user_data))
+        print(f"Created user ID: {user_id}")
+        return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
         return jsonify({'message': str(e)}), 400
     except DatabaseIntegrityError as e:

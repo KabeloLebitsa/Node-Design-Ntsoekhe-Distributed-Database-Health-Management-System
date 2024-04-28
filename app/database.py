@@ -45,9 +45,19 @@ class DatabaseManager:
 
     def insert_user(self, user):
         with self.get_db() as db:
-            db.add(user)
-            db.commit()
-            return user
+            try:
+                if (
+                    existing_user := db.query(User)
+                    .filter(User.Username == user.Username)
+                    .one_or_none()
+                ):
+                    return existing_user.UserID
+                db.add(user)
+                db.commit()
+                return user.UserID
+            except Exception as e:
+                print(f"Error occurred during user insertion: {e}")
+                return None
 
     def insert_patient(self, patient):
         with self.get_db() as db:

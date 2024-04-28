@@ -111,7 +111,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ Name, DateOfBirth, Gender, PhoneNumber})
+          body: JSON.stringify({ Name, DateOfBirth, Gender, PhoneNumber, UserID: userData.UserID})
         })
         .then(response => response.json())
         .then(patientData => {
