@@ -9,6 +9,7 @@ from models import User
 from api import api
 
 db_manager = DatabaseManager()
+db_manager.create_tables()
 
 app = Flask(__name__)
 # Initialize Flask-Login
@@ -56,7 +57,7 @@ def create_dashboard_route(role):
     return dashboard
 
 @app.route('/user/info')
-@login_required
+#@login_required
 def user_info():
     user_id = current_user.UserID
     with db_manager.get_db() as db:
@@ -87,7 +88,7 @@ def login_page():
 
 # Logout route
 @app.route('/logout')
-@login_required
+#@login_required
 def logout():
     logout_user()
     return redirect(url_for('login_page'))

@@ -7,7 +7,7 @@ BEGIN
   SELECT NEW.Role INTO user_type;
 
   IF user_type NOT IN ('patient', 'doctor') THEN
-    RAISE ROLLBACK - Rejects invalid user types
+    RAISE ROLLBACK
   END IF;
 
 

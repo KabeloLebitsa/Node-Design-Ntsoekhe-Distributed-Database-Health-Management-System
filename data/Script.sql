@@ -1,0 +1,1 @@
+INSERT INTO departments (DepartmentName) VALUES ('Emergency'),('Surgery'),('Gynecology'),('Pediatrics'),('Radiology'),('Pathology'),('Neurology');

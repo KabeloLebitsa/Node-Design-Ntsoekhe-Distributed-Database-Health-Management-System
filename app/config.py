@@ -7,7 +7,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
     SECRET_KEY = os.urandom(32)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    OTHER_NODES = [
+    NODES = [
         'https://172.0.0.1:8081',
         'https://172.0.0.2:8082',
         'https://172.0.0.3:8083',

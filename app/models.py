@@ -7,14 +7,16 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = 'users'
-    UserID = Column(Integer, primary_key=True)
+    UserID = Column(String, primary_key=True)
     Username = Column(String, unique=True, nullable=False)
     Password = Column(String, nullable=False)
     Role = Column(String, nullable=False) 
     IsActive = Column(Boolean, default=False)
     IsAuthenticated = Column(Boolean, default=False)
     IsAnonymous = Column(Boolean, default=False)  
-    def __init__(self, username, password, role):
+    
+    def __init__(self, user_id, username, password, role):
+        self.UserID = user_id
         self.Username = username
         self.Password = password
         self.Role = role
@@ -39,7 +41,7 @@ class User(Base):
 class Patient(Base):
   __tablename__ = 'patients'
 
-  PatientID = Column(Integer, ForeignKey('users.UserID'), primary_key=True)
+  PatientID = Column(String, ForeignKey('users.UserID'), primary_key=True)
   Name = Column(String)
   DateOfBirth = Column(Date)
   Gender = Column(String)
@@ -58,7 +60,7 @@ class Patient(Base):
 class Doctor(Base):
   __tablename__ = 'doctors'
 
-  DoctorID = Column(Integer, ForeignKey('users.UserID'), primary_key=True)  
+  DoctorID = Column(String, ForeignKey('users.UserID'), primary_key=True)  
   Name = Column(String)
   Specialization = Column(String)
   PhoneNumber = Column(Integer, unique=True)
@@ -77,7 +79,7 @@ class Doctor(Base):
 class Nurse(Base):
     __tablename__ = 'nurses'
 
-    NurseID = Column(Integer, primary_key=True)
+    NurseID = Column(String, primary_key=True)
     Name = Column(String)
     PhoneNumber = Column(Integer, unique=True)
     DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
@@ -95,8 +97,8 @@ class Appointment(Base):
     __tablename__ = 'appointments'
 
     AppointmentID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
-    DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
+    PatientID = Column(String, ForeignKey('patients.PatientID'))
+    DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
     AppointmentDateTime = Column(Date)
     Purpose = Column(String)
     #needs_replication = Column(Boolean, default=True)
@@ -104,8 +106,8 @@ class MedicalRecord(Base):
     __tablename__ = 'medical_records'
 
     RecordID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
-    DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
+    PatientID = Column(String, ForeignKey('patients.PatientID'))
+    DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
     DateOfVisit = Column(Date)
     Diagnosis = Column(Text)
     TreatmentPlan = Column(Text)
@@ -113,8 +115,8 @@ class Prescription(Base):
     __tablename__ = 'prescriptions'
 
     PrescriptionID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
-    DoctorID = Column(Integer, ForeignKey('doctors.DoctorID'))
+    PatientID = Column(String, ForeignKey('patients.PatientID'))
+    DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
     Medication = Column(String)
     Dosage = Column(String)
     Instructions = Column(Text)
@@ -123,7 +125,7 @@ class Billing(Base):
     __tablename__ = 'billings'
 
     BillingID = Column(Integer, primary_key=True)
-    PatientID = Column(Integer, ForeignKey('patients.PatientID'))
+    PatientID = Column(String, ForeignKey('patients.PatientID'))
     TotalCost = Column(Float)  
     PaymentStatus = Column(String)
     DateOfBilling = Column(Date)

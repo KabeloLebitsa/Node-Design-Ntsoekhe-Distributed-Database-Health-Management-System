@@ -12,7 +12,7 @@ db_manager = DatabaseManager()
 
 # Endpoint for creating a user
 @api.route('/create/users', methods=['POST'])
-@login_required
+#@login_required
 def create_user():
     user_data = request.get_json()
     if not user_data:
@@ -34,7 +34,7 @@ def create_user():
 
 # Endpoint for creating a patient
 @api.route('/create/patients', methods=['POST'])
-@login_required
+#@login_required
 def create_patient():
     patient_data = request.get_json()
     required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
@@ -56,7 +56,7 @@ def create_patient():
 
 # Endpoint for retrieving patient by ID
 @api.route('/patients/<int:patient_id>', methods=['GET'])
-@login_required
+#@login_required
 def get_patient_by_id(patient_id):
     if patient := db_manager.get_patient_by_id(patient_id):
         return jsonify(patient.serialize()), 200
@@ -66,7 +66,7 @@ def get_patient_by_id(patient_id):
 
 # Endpoint for updating patient
 @api.route('/patients/<int:patient_id>', methods=['PUT'])
-@login_required
+#@login_required
 def update_patient(patient_id):
     update_data = request.get_json()
     if not update_data:
@@ -83,7 +83,7 @@ def update_patient(patient_id):
 
 
 @api.route('/patients/<int:patient_id>', methods=['DELETE'])
-@login_required
+#@login_required
 def delete_patient(patient_id):
     try:
         patient = db_manager.get_patient_by_id(patient_id)
@@ -101,7 +101,7 @@ def delete_patient(patient_id):
 
 # Endpoint for creating a doctor
 @api.route('/create/doctors', methods=['POST'])
-@login_required
+#@login_required
 def create_doctor():
     doctor_data = request.get_json()
     required_fields = ["Name", "Specialization", "PhoneNumber", "DepartmentName"]
@@ -123,15 +123,66 @@ def create_doctor():
         return jsonify({'message': 'Failed to create doctor'}), 500
 
 @api.route('/display/patients', methods=["GET"])
-@login_required
+#@login_required
 def display_patients():
   patients = db_manager.get_all_patients()
   return render_template('display_patients.html', patients=patients)
 
 @api.route('/search/patients', methods=["GET"])
-@login_required
+#@login_required
 def search_patients():
     query = request.args.get('query', '')
     with db_manager.get_db() as conn:
         patients = conn.query(Patient).filter(Patient.Name.ilike(f'%{query}%')).all()
     return render_template('display_patients.html', patients=patients)
+
+@api.route('/replicate/<action>/<ObjectType>', methods=['POST'])
+#@login_required
+def replicate():
+    try:
+        data = request.get_json()
+        if not data:
+          return jsonify({'message': 'Missing data'}), 400
+
+        action = data.get('action')
+        if action not in ('create', 'update', 'delete'):
+          return jsonify({'message': 'Invalid action'}), 400
+
+        ObjectType = data.get('ObjectType')
+        if ObjectType not in ('patient', 'doctor', 'nurse'):
+          return jsonify({'message': 'Invalid object type'}), 400
+
+        db_data = data.get('data')
+        if not db_data:
+          return jsonify({'message': 'Missing data to process'}), 400
+
+        action_method_map = {          
+           'user': {
+            'create': db_manager.insert_user,
+            'delete': db_manager.delete_user,
+          },
+          'patient': {
+            'create': db_manager.insert_patient,
+            'update': db_manager.update_patient,
+            'delete': db_manager.delete_patient,
+          },
+          'doctor': { 
+            'create': db_manager.insert_doctor,  
+            'update': db_manager.update_doctor,
+            'delete': db_manager.delete_doctor,
+          },
+          'nurse': {
+            # ...
+          }
+        }
+
+        action_method = action_method_map.get(ObjectType).get(action)
+        if not action_method:
+          return jsonify({'message': 'Unsupported action-object type combination'}), 400
+
+        action_method(db_data)
+
+        return jsonify({'message': f'{ObjectType} {action}d successfully'}), 201
+    except Exception as e:
+        print(f"Error replicating data: {e}")
+        return jsonify({'message': 'Failed to replicate data'}), 500

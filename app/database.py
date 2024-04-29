@@ -1,25 +1,31 @@
 # database.py
 
 import datetime
+import requests
+import socket
+import random
 from sqlite3 import IntegrityError
 from flask import jsonify
-import requests
 from config import Config
 from flask_login import login_user
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Patient, Doctor, User
+from models import Base, Patient, Doctor, User
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
 
 # Database manager class
 class DatabaseManager:
     def __init__(self):
         self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
-        self.OTHER_NODES = Config.OTHER_NODES
-
+        self.NODES = Config.NODES
+        self.MY_NODE_ID = socket.gethostname()
+        
+    def create_tables(self):
+        engine = create_engine(self.DATABASE_URL)
+        Base.metadata.create_all(engine)
+        
     def get_session(self):
-        # Create a new engine and sessionmaker each time
         engine = create_engine(self.DATABASE_URL)
         Session = sessionmaker(bind=engine)
         return Session()
@@ -31,12 +37,19 @@ class DatabaseManager:
             yield db
         finally:
             db.close()
-
+    def generate_user_id(self, role):
+        prefix = {'admin': 'a', 'patient': 'p', 'doctor': 'd', 'nurse': 'n'}
+        with self.get_db() as db:
+            while True:
+                user_id = prefix[role] + ''.join([str(random.randint(0, 9)) for _ in range(5)])
+                if not db.query(User).filter(User.UserID == user_id).one_or_none():
+                    return user_id
     def ensure_admin_user(self):
         with self.get_db() as db:
             admin_user = db.query(User).filter(User.Username == 'admin').one_or_none()
             if not admin_user:
-                new_admin = User(Username='admin', Password='admin123', Role='admin') 
+                admin_id = self.generate_user_id('admin')
+                new_admin = User(admin_id, 'admin', 'admin123', 'admin') 
                 db.add(new_admin)
                 try:
                     db.commit()
@@ -47,15 +60,16 @@ class DatabaseManager:
         with self.get_db() as db:
             return db.query(User).get(user_id)
 
-    def insert_user(self, user): 
+    def insert_user(self, user):
         with self.get_db() as db:
             try:
                 if db.query(User).filter(User.Username == user['Username']).one_or_none():
                     raise Exception('Username already exists')
+                role = user['Role']
+                user_id = self.generate_user_id(role)
                 username = user['Username']
                 password = user['Password']
-                role = user['Role']
-                new_user = User(username, password, role)
+                new_user = User(user_id, username, password, role)
                 db.add(new_user)
                 db.commit()
                 return new_user.UserID
@@ -217,10 +231,18 @@ class DatabaseManager:
             print(f"Error occurred during authentication: {e}")
             return None
 
-    def replicate_data(self, action, data):
-        for node in self.OTHER_NODES:
-            try:
-                response = requests.post(f"https://{node}/replicate-{action}", json=data)
-                response.raise_for_status()  # Raise exception for non-2xx response codes
-            except requests.exceptions.RequestException as e:
-                print(f"Error replicating data to node {node}: {e}")
+
+  
+    def replicate_data(self, action, data, ObjectType):
+        for node in self.NODES:
+            if node != self.NODE_ID:  # Make sure to use MY_NODE_ID
+                try:
+                    url = f"https://{node}/replicate/{action}/{ObjectType}"
+                    data_with_type = {'data': data, 'ObjectType': ObjectType}
+                    response = requests.post(url, json=data_with_type)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as e:
+                    return jsonify({"error": f"Error replicating data to node {node}: {str(e)}"}), 500
+
+
+
