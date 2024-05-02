@@ -48,7 +48,6 @@ class Patient(Base):
   PhoneNumber = Column(Integer, unique=True)
 
   appointments = relationship("Appointment", backref='patient')
-  medical_records = relationship("MedicalRecord", backref='patient')
   prescriptions = relationship("Prescription", backref='patient')
   billings = relationship("Billing", backref='patient')
   def __init__(self, patient_id, name, date_of_birth, gender, phone_number):
@@ -67,7 +66,6 @@ class Doctor(Base):
   DepartmentID = Column(Integer, ForeignKey('departments.DepartmentID'))
 
   appointments = relationship("Appointment", backref='doctor')
-  medical_records = relationship("MedicalRecord", backref='doctor')
   prescriptions = relationship("Prescription", backref='doctor')
 
   def __init__(self, doctor_id, name, specializaton, phone_number, department_id):
@@ -101,16 +99,6 @@ class Appointment(Base):
     DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
     AppointmentDateTime = Column(Date)
     Purpose = Column(String)
-    #needs_replication = Column(Boolean, default=True)
-class MedicalRecord(Base):
-    __tablename__ = 'medical_records'
-
-    RecordID = Column(Integer, primary_key=True)
-    PatientID = Column(String, ForeignKey('patients.PatientID'))
-    DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
-    DateOfVisit = Column(Date)
-    Diagnosis = Column(Text)
-    TreatmentPlan = Column(Text)
 class Prescription(Base):
     __tablename__ = 'prescriptions'
 
@@ -119,7 +107,18 @@ class Prescription(Base):
     DoctorID = Column(String, ForeignKey('doctors.DoctorID'))
     Medication = Column(String)
     Dosage = Column(String)
+    Frequency = Column(String)
+    Refills = Column(Integer)
     Instructions = Column(Text)
+    
+    def __init__(self, patient_id, doctor_id, medication, dosage, frequency, refills, instructions):
+        self.PatientID = patient_id  
+        self.DoctorID = doctor_id
+        self.Medication = medication
+        self.Dosage = dosage
+        self.Frequency = frequency
+        self.Refills = refills
+        self.Instructions = instructions
     
 class Billing(Base):
     __tablename__ = 'billings'

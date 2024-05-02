@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patients</title>
+    <title>Doctors</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,47 +11,59 @@
             margin: 0;
             padding: 20px;
         }
+    
         h1 {
             color: #333333;
             margin-bottom: 20px;
         }
+    
         table {
             width: 100%;
             border-collapse: collapse;
             background-color: #ffffff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        th, td {
+    
+        th,
+        td {
             border: 1px solid #dddddd;
             text-align: left;
             padding: 12px;
         }
+    
         th {
             background-color: #f2f2f2;
         }
+    
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+    
         tr:hover {
             background-color: #e9e9e9;
         }
+    
         .action-link {
             padding: 5px 10px;
             border-radius: 5px;
             text-decoration: none;
             color: black;
         }
+    
         .update-link {
             background-color: lightgreen;
         }
+    
         .delete-link {
             background-color: tomato;
             color: white;
         }
+    
         .search-container {
             margin-bottom: 20px;
             text-align: right;
         }
+    
         .search-container input[type=text] {
             padding: 10px;
             margin-top: 8px;
@@ -60,6 +72,7 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+    
         .search-container button {
             padding: 10px;
             margin-top: 8px;
@@ -70,14 +83,15 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+    
         .search-container button:hover {
             background: #bbb;
         }
     </style>
 </head>
 <body>
-    <h1>Patients</h1>
-    <form action="/search/patients" method="GET" class="search-container">
+    <h1>Doctors</h1>
+    <form action="/search/doctors" method="GET" class="search-container">
         <input type="text" name="query" placeholder="Search by name">
         <button type="submit">Search</button>
     </form>
@@ -92,15 +106,15 @@
             </tr>
         </thead>
         <tbody>
-            {% for patient in patients %}
+            {% for doctor in doctors %}
             <tr>
-                <td>{{ patient.Name }}</td>
-                <td>{{ patient.DateOfBirth }}</td>
-                <td>{{ patient.Gender }}</td>
-                <td>{{ patient.PhoneNumber }}</td>
+                <td>{{ doctor.Name }}</td>
+                <td>{{ doctor.DateOfBirth }}</td>
+                <td>{{ doctor.Gender }}</td>
+                <td>{{ doctor.PhoneNumber }}</td>
                 <td>
-                    <a href="/patients/update/{{ patient.PatientID }}" class="action-link update-link">Update</a> |
-                    <a href="/patients/delete/{{ patient.PatientID }}" class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</a>
+                    <a href="/doctors/update/{{ doctor.DoctorID }}" class="action-link update-link">Update</a> |
+                    <a href="/doctors/delete/{{ doctor.DoctorID }}" class="action-link delete-link" data-id="{{ doctor.DoctorID }}">Delete</a>
                 </td>
             </tr>
             {% endfor %}
@@ -112,20 +126,20 @@
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function (event) {
                     event.preventDefault();
-                    const patientId = button.getAttribute('data-id');
-                    if (confirm('Are you sure you want to delete this patient?')) {
-                        deletePatient(patientId);
+                    const doctorId = button.getAttribute('data-id');
+                    if (confirm('Are you sure you want to delete this doctor?')) {
+                        deleteDoctor(doctorId);
                     }
                 });
             });
 
-            function deletePatient(patientId) {
-                fetch(`/patients/${patientId}`, {
+            function deleteDoctor(doctorId) {
+                fetch(`/doctors/${doctorId}`, {
                     method: 'DELETE'
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Patient deleted successfully');
+                        alert('Doctor deleted successfully');
                         window.location.reload();
                     } else {
                         if (response.headers.get("content-type").includes("application/json")) {
@@ -138,7 +152,7 @@
                     }
                 })
                 .catch(error => {
-                    alert('Error deleting patient: ' + error.message);
+                    alert('Error deleting doctor: ' + error.message);
                 });
             }
         });

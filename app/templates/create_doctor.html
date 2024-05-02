@@ -60,7 +60,7 @@
   <h1>Create New Doctor</h1>
   <form id="CreateDoctorForm">
     <h3>Personal Information</h3>
-    <input type="text" id="Name" placeholder="Full Name" required>
+    <input type="text" id="DoctorName" placeholder="Full Name" required>
     <input type="numeric" id="PhoneNumber" placeholder="Phone Number" required>
     <select id="Specialization" required>
       <option value="" disabled selected>Select Specialization</option>
@@ -92,14 +92,14 @@ document.getElementById("CreateDoctorForm").addEventListener("submit", function(
   event.preventDefault(); // Prevent default form submission
 
   // Basic validation (similar to create_patient.html)
-  const Name = document.getElementById("Name").value.trim();
+  const DoctorName = document.getElementById("DoctorName").value.trim();
   const Phone = document.getElementById("PhoneNumber").value;
   const Specialization = document.getElementById("Specialization").value;
   const DepartmentName = document.getElementById("Department").value;
   const Username = document.getElementById("Username").value.trim();
   const Password = document.getElementById("Password").value;
 
-  if (!Name || !PhoneNumber || !Specialization || !DepartmentName || !Username || !Password) {
+  if (!DoctorName || !PhoneNumber || !Specialization || !DepartmentName || !Username || !Password) {
     alert("Please fill out all required fields");
     return;
   }
@@ -125,7 +125,7 @@ document.getElementById("CreateDoctorForm").addEventListener("submit", function(
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ Name, PhoneNumber, Specialization, DepartmentName, DoctorID: userData.UserID})
+          body: JSON.stringify({ DoctorName, PhoneNumber, Specialization, DepartmentName, DoctorID: userData.UserID})
         })
         .then(response => response.json())
         .then(doctorData => {

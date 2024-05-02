@@ -22,3 +22,5 @@ class TypeError(Exception):
     pass
 class Exception(Exception):
     pass
+class PatientDeletionError(Exception):
+    pass

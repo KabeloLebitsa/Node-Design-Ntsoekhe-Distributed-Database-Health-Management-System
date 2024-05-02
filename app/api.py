@@ -1,10 +1,11 @@
 #api.py
 
+import datetime
 from sqlite3 import IntegrityError
 from flask import Blueprint, request, jsonify, render_template
-from flask_login import login_required
-from exceptions import PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
-from models import Patient, Doctor, Nurse, Department, Appointment, MedicalRecord, Prescription, Billing, User
+from flask_login import login_required, current_user
+from exceptions import PatientDeletionError, PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
+from models import Patient, Doctor, Nurse, Department, Appointment, Prescription, Billing, User
 from database import DatabaseManager
 
 api = Blueprint('api', __name__)
@@ -82,21 +83,30 @@ def update_patient(patient_id):
         return jsonify({'message': 'Failed to update patient'}), 500
 
 
-@api.route('/patients/<int:patient_id>', methods=['DELETE'])
+@api.route('/patients/<string:patient_id>', methods=['DELETE'])
 #@login_required
 def delete_patient(patient_id):
-    try:
-        patient = db_manager.get_patient_by_id(patient_id)
-        if not patient:
-            return jsonify({'message': 'Patient not found'}), 404
-        db_manager.delete_user(patient_id)
-        db_manager.delete_patient(patient_id)
-        return jsonify({'message': 'Patient deleted successfully'}), 200
-    except PatientNotFoundException as e:
-        return jsonify({'message': str(e)}), 404
-    except Exception as e:
-        print(f"Error deleting patient: {e}")
-        return jsonify({'message': 'Internal server error'}), 500
+  try:
+    patient = db_manager.get_patient_by_id(patient_id)
+    if not patient:
+      return jsonify({'message': 'Patient not found'}), 404
+    db_manager.delete_user(patient_id)
+    db_manager.delete_patient(patient_id)
+    return jsonify({'message': 'Patient deleted successfully'}), 200
+
+  except PatientNotFoundException as e:
+    return jsonify({'message': str(e)}), 404
+
+  except (IntegrityError, PatientDeletionError) as e:
+    return jsonify({'message': f"Error deleting patient: {str(e)}"}), 400
+
+  except Exception as e:  
+    print(f"Error deleting patient: {e}")
+    return jsonify({'message': 'Internal server error'}), 500
+
+  except:
+    return jsonify({'message': 'Unexpected error occurred'}), 500
+
 
 
 # Endpoint for creating a doctor
@@ -104,7 +114,7 @@ def delete_patient(patient_id):
 #@login_required
 def create_doctor():
     doctor_data = request.get_json()
-    required_fields = ["Name", "Specialization", "PhoneNumber", "DepartmentName"]
+    required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
     with db_manager.get_db() as conn:
         DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['DepartmentName']).one_or_none()
     doctor_data['DepartmentID'] = DepartmentID
@@ -114,7 +124,7 @@ def create_doctor():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        db_manager.insert_doctor(**doctor_data)
+        db_manager.insert_doctor(doctor_data)
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
@@ -186,3 +196,71 @@ def replicate():
     except Exception as e:
         print(f"Error replicating data: {e}")
         return jsonify({'message': 'Failed to replicate data'}), 500
+
+@api.route('/prescriptions/create', methods=['POST'])
+def add_prescription():
+    try:
+        if hasattr(current_user, 'UserID'):
+            doctor_id = current_user.UserID
+        else:
+            return jsonify({'error': 'current_user does not have UserID attribute'}), 400
+        
+        prescription_data = request.get_json()
+        if prescription_data is None:
+            return jsonify({'error': 'Missing prescription data'}), 400
+        
+        prescription_data['DoctorID'] = doctor_id 
+        
+        db_manager.insert_prescription(prescription_data)
+        return jsonify({'message': 'Prescription added successfully!'}), 201
+    
+    except DatabaseIntegrityError as e:
+        return jsonify({'error': str(e)}), 400
+    
+    except InternalServerError as e:
+        return jsonify({'error': str(e)}), 500
+    
+@api.route('/doctor/name')
+@login_required
+def get_doctor_name():
+    try:
+        doctor = db_manager.get_doctor_by_id(current_user.UserID)
+        if doctor is None:
+            return jsonify({'message': 'Doctor not found'}), 404
+        doctor_name = doctor.Name
+        return jsonify({'name': doctor_name}), 201
+    except Exception as e:
+        return jsonify({'error': 'Failed to retrieve doctor name'}), 500
+    
+@api.route("/appointments/", methods=["GET"])
+def get_upcoming_appointments():
+  doctor_id = current_user.UserID  # Get the doctor's ID
+  appointments = db_manager.get_all_appointments()
+  today = datetime.today()
+
+  # Filter appointments based on date and the doctor's ID
+  upcoming_appointments = [
+      appointment for appointment in appointments
+      if datetime.strptime(appointment["dateTime"], "%Y-%m-%dT%H:%M:%S") >= today and appointment['DoctorID'] == doctor_id
+  ]
+
+  # Limit to 5 appointments on the server-side
+  upcoming_appointments = upcoming_appointments[:5]
+
+  return jsonify(upcoming_appointments), 200
+
+
+@api.route("/patients/", methods=["GET"])
+def get_patients():
+  doctor_id = current_user.UserID
+  appointments = db_manager.get_appointments_by_doctor_id(doctor_id)
+  today = datetime.today()
+
+  recent_patients = []
+  for appointment in appointments:
+    if datetime.strptime(appointment["dateTime"], "%Y-%m-%dT%H:%M:%S") < today:
+      patient = db_manager.get_patient_by_id(appointment['PatientID'])
+      recent_patients.append({"name": patient.Name})
+
+  return jsonify(recent_patients), 200
+

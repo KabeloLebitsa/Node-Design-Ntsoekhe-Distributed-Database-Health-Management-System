@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Prescription</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      position: relative;
+    }
+
+    h1, h3 {
+      color: #333333;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input, button, select {
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 17px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: block;
+      width: 95%;
+    }
+
+    button {
+      cursor: pointer;
+      background: #ddd;
+    }
+
+    button:hover {
+      background: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Create New Prescription</h1>
+  <form id="CreatePrescriptionForm">
+    <h3>Patient Information</h3>
+    <select id="PatientID" required>
+      <option value="" disabled selected>Select Patient</option>
+    </select>
+
+    <h3>Prescription Details</h3>
+    <input type="text" id="MedicationName" placeholder="Medication Name" required>
+    <input type="number" id="Dosage" placeholder="Dosage (e.g., 10mg)" required>
+    <select id="DosageUnit" required>
+      <option value="" disabled selected>Dosage Unit</option>
+      <option value="mg">mg</option>
+      <option value="ml">ml</option>
+      <option value="tablets">tablets</option>
+      </select>
+    <input type="number" id="Frequency" placeholder="Frequency (e.g., Twice daily)" required>
+    <select id="FrequencyUnit" required>
+      <option value="" disabled selected>Frequency Unit</option>
+      <option value="daily">Daily</option>
+      <option value="times/day">Times/Day</option>
+      <option value="weekly">Weekly</option>
+      </select>
+    <input type="number" id="Refills" placeholder="Refills (0 for no refills)" required>
+    <textarea id="Instructions" placeholder="Special Instructions (optional)"></textarea>
+    <button type="submit">Create Prescription</button>
+  </form>
+  <script>
+    document.getElementById('CreatePrescriptionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const formData = {
+                drug: document.getElementById('drug').value,
+                dosage: document.getElementById('dosage').value,
+                patientId: document.getElementById('patientId').value
+            };
+
+            fetch('/prescriptions/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Prescription added successfully: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                alert('Error adding prescription: ' + error);
+            });
+        });  
+    </script>
+</body>
+</html>

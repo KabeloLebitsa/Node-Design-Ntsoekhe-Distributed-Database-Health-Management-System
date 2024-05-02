@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <style>
-        * {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard</title>
+  <style>
+     * {
             box-sizing: border-box;
         }
 
@@ -22,7 +22,7 @@
 
         .sidebar {
             background-color: #f2f2f2;
-            width: 220px;
+            width: 250px;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -70,24 +70,125 @@
             color: #666666;
             line-height: 1.5;
         }
-    </style>
+       
+        .logout {
+        position: absolute;
+        bottom: 40px;
+        left: 30px;
+        background-color: #f2f2f2; 
+        border: 1px solid #ccc;
+        padding: 6px 12px;
+        border-radius: 4px;
+        color: #333333;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        font-size: 16px;
+        }
+
+        .logout:hover {
+        background-color: #e9e9e9;
+        }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h2>Options</h2>
-            <ul>
-                <li><a href="/patients/create">Create Patients</a></li>
-                <li><a href="/patients/Display">Display Patients</a></li>
-                <li><a href="/appointments/">Appointments</a></li>
-                
-                
-            </ul>
-        </div>
-        <div class="content">
-            <h1>Welcome To Ntsoekhe Dashboard</h1>
-            <p>Select an option from the sidebar to get started.</p>
-        </div>
+  <div class="container">
+    <a href="/logout" class="logout">Logout</a>
+    <div class="sidebar">
+      <h2>Doctor Dashboard</h2>
+      <ul>
+        <li><a href="/appointments/manage">Manage Appointments</a></li>
+        <li><a href="/prescriptions/create">Create Prescription</a></li>
+        <li><a href="/patients/history">View Patient History</a></li>
+      </ul>
     </div>
+    <div class="content">
+      <h1>Welcome Dr. <script>document.write(getDoctorName())</script></h1>
+      <p>Manage your patients and appointments efficiently.</p>
+      <section class="appointments">
+        <h2>Upcoming Appointments</h2>
+        <ul>
+          </ul>
+      </section>
+      <section class="recent-patients">
+        <h2>Recent Patients</h2>
+        <ul>
+          </ul>
+      </section>
+    </div>
+  </div>
+  <script>
+    async function getDoctorName() {
+      try {
+        const response = await fetch("/doctor/name", {
+          method: "GET",
+          // Add headers for authentication if needed (e.g., authorization token)
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching doctor name: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data.name; 
+      } catch (error) {
+        console.error("Error fetching doctor name:", error);
+        return "Error";
+      }
+    }
+
+    async function getUpcomingAppointments() {
+      try {
+        const response = await fetch("/appointments/", {
+          method: "GET",
+          // Add headers for authentication if needed
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching appointments: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data.slice(0, 5); // Limit to 5 
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return []; // Return empty array if error occurs
+      }
+    }
+
+    async function getRecentPatients() {
+      try {
+        const response = await fetch("/patients/", {
+          method: "GET",
+          // Add headers for authentication if needed
+        });
+        if (!response.ok) {
+          throw new Error(`Error fetching recent patients: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data.slice(0, 5); // Limit to 5 recent patients
+      } catch (error) {
+        console.error("Error fetching recent patients:", error);
+        return []; // Return empty array if error occurs
+      }
+    }
+
+    (async () => {
+      const appointments = await getUpcomingAppointments();
+      const patients = await getRecentPatients();
+
+      // Display appointments
+      const appointmentList = document.querySelector(".appointments ul");
+      appointments.forEach(appointment => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${appointment.patientName} - ${appointment.dateTime}`;
+        appointmentList.appendChild(listItem);
+      });
+
+      // Display patients
+      const patientList = document.querySelector(".recent-patients ul");
+      patients.forEach(patient => {
+        const listItem = document.createElement("li");
+        listItem.textContent = patient.name; // Assuming 'name' property in patient object
+        patientList.appendChild(listItem);
+      });
+    })();
+  </script>
 </body>
 </html>

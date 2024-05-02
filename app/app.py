@@ -111,7 +111,10 @@ def create_patient():
 @app.route('/register/doctors')
 def create_doctor():
     return render_template('create_doctor.html')
-
+# Create prescription page route 
+@app.route('/insert/prescriptions')
+def create_prescription():
+    return render_template('create_prescription.html')
 # Main function
 if __name__ == '__main__':
     debug_mode = app_config.DEBUG

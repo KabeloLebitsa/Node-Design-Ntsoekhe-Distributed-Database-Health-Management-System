@@ -3,119 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Update Patient Information</title>
-</head>
-<style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 20px;
-      position: relative;
+  <title>Medical </title>
+  <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 12px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #e9e9e9;
+        }
+        .action-link {
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: black;
+        }
+        .edit-link {
+            background-color: lightgreen;
+        }
+        .delete-link {
+            background-color: tomato;
+            color: white;
+        }.action-link {
+        padding: 5px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        color: black;
     }
-
-    h1, h3 {
-      color: #333333;
-      margin-bottom: 20px;
+    .update-link {
+        background-color: lightgreen;
     }
-
-    form {
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    input, button {
-      padding: 10px;
-      margin-top: 8px;
-      font-size: 17px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      display: block;
-      width: 95%;
-    }
-
-    select {
-      padding: 10px;
-      margin-top: 8px;
-      font-size: 17px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      display: block;
-      width: 15%;
-    }
-
-    button {
-      cursor: pointer;
-      background: #ddd;
-    }
-
-    button:hover {
-      background: #bbb;
-    }
-    
-
-    table {
-      width: 100%; 
-      border-collapse: collapse; 
-    }
-
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-
-    th {
-      background: #f7f7f7;
-      font-weight: bold;
-    }
-
-    td:first-child {
-      width: 30%; 
-    }
-
-    .info-list {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    .info-list li {
-      margin-bottom: 5px;
+    .delete-link {
+        background-color: tomato;
+        color: white;
     }
   </style>
+</head>
 <body>
-  <body>
-  <h1>Update Patient Information</h1>
-  <hr>
-
-  <p>Patient ID: <span id="patient-id"></span></p>
-
+  <h1>Patients</h1>
   <table>
-    <tr>
-      <th></th> <th>Information</th>
-    </tr>
-    <tr>
-      <th>Bills</th>
-      <td><p>View and update unpaid bills here.</p></td>
-    </tr>
-    <tr>
-      <th>Prescriptions</th>
-      <td><p>Request medication refills or view active prescriptions.</p></td>
-    </tr>
-    <tr>
-      <th>Medical Record</th>
-      <td>
-        <p>(Note: Only authorized personnel can update medical records)</p>
-        <a href="#" disabled>Update Medical Record (Authorized Only)</a>
-      </td>
-    </tr>
-    <tr>
-      <th>Appointments</th>
-      <td><p>View upcoming appointments or schedule new ones.</p></td>
-    </tr>
+    <thead>
+      <tr>
+        <th>Appointments</th>
+        <th>Prescriptions</th>
+        <th>Billings</th>
+      </tr>
+    </thead>
+  <tbody>
+    {% for patient in patients %}
+      <tr>
+        <td>
+          {% if patient.appointments %}
+            <ul>
+              {% for appointment in patient.appointments %}
+                <li>{{ appointment.Date }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            No Appointments
+          {% endif %}
+          <a href="/appointments/{{ appointment.id }}/edit" class="action-link edit-link">Edit</a> | 
+          <a href="/appointments/{{ appointment.id }}/delete" class="action-link delete-link" data-id="{{ appointment.AppointmentID }}">Delete</a>
+        </td>
+
+        <td>
+          {% if patient.prescriptions %}
+            <ul>
+              {% for prescription in patient.prescriptions %}
+                <li>{{ prescription.details }}</li> {% endfor %}
+            </ul>
+          {% else %}
+            No Prescriptions
+          {% endif %}
+          <a href="/prescriptions/{{ prescription.PrescriptionID }}/edit" class="action-link edit-link">Edit</a>
+        </td>
+
+        <td>
+          {% if patient.bills %}
+            <ul>
+              {% for bill in patient.bills %}
+                <li>{{ bill.amount }}</li> {% endfor %}
+            </ul>
+          {% else %}
+            No Bills
+          {% endif %}
+          <a href="/bills/{{ prescription.PrescriptionID }}/edit" class="action-link edit-link">Edit</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
   </table>
-</body>
+  </body>
 </html>

@@ -75,9 +75,8 @@
   </form>
   <script>
     document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault();
 
-    // Basic validation
     const Name = document.getElementById("Name").value.trim();
     const DateOfBirth = document.getElementById("DateOfBirth").value;
     const Gender = document.getElementById("Gender").value;
