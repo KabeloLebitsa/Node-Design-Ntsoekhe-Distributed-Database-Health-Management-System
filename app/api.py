@@ -82,7 +82,7 @@ def update_patient(patient_id):
         return jsonify({'message': 'Failed to update patient'}), 500
 
 
-@api.route('/patients/<int:patient_id>', methods=['DELETE'])
+@api.route('/patients/<string:patient_id>', methods=['DELETE'])
 #@login_required
 def delete_patient(patient_id):
     try:
