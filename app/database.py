@@ -15,6 +15,25 @@ from models import Base, Patient, Doctor, User, Prescription, Appointment, Depar
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
 import logging
 
+
+
+import hashlib
+
+def hash_password(password):
+        # Encode the password string to bytes
+    password_bytes = password.encode('utf-8')
+
+        # Create a SHA-256 hash object
+    hash_object = hashlib.sha256()
+
+        # Update the hash object with the password bytes
+    hash_object.update(password_bytes)
+
+        # Get the hexadecimal representation of the hash
+    hashed_password = hash_object.hexdigest()
+
+    return hashed_password
+   
 # Database manager class
 class DatabaseManager:
     def __init__(self):
@@ -69,7 +88,10 @@ class DatabaseManager:
                     return jsonify({'error': 'Username already exists'}), 400
                 user_id = user.get('UserID') or self.generate_user_id(user['Role'])
                 username = user['Username']
-                password = user['Password']
+                
+                hashed_password = hash_password(user['Password'])
+                password = hashed_password
+
                 role = user['Role']
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
