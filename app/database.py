@@ -4,7 +4,6 @@ from dateutil.parser import parse
 import requests
 import socket
 import random
-import sqlalchemy
 from sqlite3 import IntegrityError
 from flask import jsonify
 from config import Config
@@ -12,8 +11,9 @@ from flask_login import login_user
 from contextlib import contextmanager
 from sqlalchemy import create_engine, Table, Column, MetaData, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker
-from models import Base, Patient, Doctor, User, Prescription, Appointment
+from models import Base, Patient, Doctor, User, Prescription, Appointment, Department
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
+import logging
 
 # Database manager class
 class DatabaseManager:
@@ -65,6 +65,7 @@ class DatabaseManager:
         with self.get_db() as db:
             try:
                 if db.query(User).filter(User.Username == user['Username']).one_or_none():
+                    logging.error('Username already exists')
                     return jsonify({'error': 'Username already exists'}), 400
                 user_id = user.get('UserID') or self.generate_user_id(user['Role'])
                 username = user['Username']
@@ -75,9 +76,11 @@ class DatabaseManager:
                 db.commit()
                 # Replicate the data to other nodes
                 #self.replicate_data('insert', new_user.to_dict(), 'user')
-                return jsonify({'user_id': new_user.UserID}), 201
+                logging.info(f"User inserted successfully. ID: {new_user.UserID}")
+                return new_user.UserID
             except Exception as e:
-                return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 500
+                logging.error(f"Error occurred during user insertion: {str(e)}")
+                return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 505
     def insert_patient(self, patient):
         with self.get_db() as db:
             try:
@@ -102,17 +105,20 @@ class DatabaseManager:
             except Exception as e:
                 raise Exception(f"Error creating patient: {str(e)}") from e
                 
-    def insert_doctor(self, doctor_data):
+    def insert_doctor(self, new_doctor):
         with self.get_db() as db:
             try:
+                with self.get_db() as db:
+                 '''   DepartmentID = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
+ 
                 # Create an instance of Doctor using the dictionary data
                 new_doctor = Doctor(
                     doctor_id=doctor_data['DoctorID'],
-                    name=doctor_data['name'],
-                    specialization=doctor_data['specialization'],
-                    phone_number=doctor_data['phoneNumber'],
-                    department_id=doctor_data['departmentID']
-                )
+                    name=doctor_data['DoctorName'],
+                    specialization=doctor_data['Specialization'],
+                    phone_number=doctor_data['PhoneNumber'],
+                    department_id=DepartmentID
+                )'''
                 db.add(new_doctor)
                 db.commit()
                 return new_doctor.DoctorID

@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from exceptions import PatientDeletionError, PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
 from models import Patient, Doctor, Nurse, Department, Appointment, Prescription, Billing, User
 from database import DatabaseManager
+import logging
 
 api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
@@ -15,7 +16,7 @@ valid_actions = ('create', 'update', 'delete')
 valid_object_types = ('patient', 'doctor', 'nurse')
 
 # Endpoint for creating a user
-@api.route('/create/users', methods=['POST'])
+@api.route('/users', methods=['POST'])
 #@login_required
 def create_user():
     user_data = request.get_json()
@@ -23,21 +24,24 @@ def create_user():
         return jsonify({'message': 'Missing user data'}), 400
     try:
         user_id = db_manager.insert_user(user_data)
+        logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
+        logging.error(f"Invalid request: {str(e)}")
         return jsonify({'message': str(e)}), 400
     except DatabaseIntegrityError as e:
-        return jsonify({'message': str(e)}), 500
+        logging.error(f"Database integrity error: {str(e)}")
+        return jsonify({'message': str(e)}), 501
     except InternalServerError as e:
-        print(f"Error creating user: {e}")
-        return jsonify({'message': 'Failed to create user'}), 500
+        logging.error(f"Internal server error: {str(e)}")
+        return jsonify({'message': 'Failed to create user'}), 502
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        return jsonify({'message': 'Internal server error'}), 500
+        logging.error(f"Unexpected error: {str(e)}")
+        return jsonify({'message': 'Internal server error'}), 503
 
 
 # Endpoint for creating a patient
-@api.route('/create/patients', methods=['POST'])
+@api.route('/patients', methods=['POST'])
 #@login_required
 def create_patient():
     patient_data = request.get_json()
@@ -57,6 +61,33 @@ def create_patient():
         print(f"Error creating patient: {e}")
         return jsonify({'message': 'Failed to create patient'}), 500
 
+@api.route('/doctors', methods=['POST'])
+#@login_required
+def create_doctor():
+    doctor_data = request.get_json()
+    required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
+    if missing_fields := [
+        field for field in required_fields if field not in doctor_data
+    ]:
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+    try:
+        with db_manager.get_db() as db:
+            DepartmentID = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
+        new_doctor = Doctor(
+        doctor_id=doctor_data['DoctorID'],
+        name=doctor_data['DoctorName'],
+        specialization=doctor_data['Specialization'],
+        phone_number=doctor_data['PhoneNumber'],
+        department_id=DepartmentID)
+        
+        db_manager.insert_doctor(new_doctor)
+        return jsonify({'redirect': '/dashboard/admin'}), 201
+    except IntegrityError as e:
+        return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
+    except Exception as e:
+        print(f"Error creating doctor: {e}")
+        return jsonify({'message': 'Failed to create doctor'}), 500
 
 # Endpoint for retrieving patient by ID
 @api.route('/patients/<int:patient_id>', methods=['GET'])
@@ -69,7 +100,7 @@ def get_patient_by_id(patient_id):
 
 
 # Endpoint for updating patient
-@api.route('/patients/<int:patient_id>', methods=['PUT'])
+@api.route('/patients/<string:patient_id>', methods=['PUT'])
 #@login_required
 def update_patient(patient_id):
     update_data = request.get_json()
@@ -111,37 +142,18 @@ def delete_patient(patient_id):
     return jsonify({'message': 'Unexpected error occurred'}), 500
 
 
-
-# Endpoint for creating a doctor
-@api.route('/create/doctors', methods=['POST'])
-#@login_required
-def create_doctor():
-    doctor_data = request.get_json()
-    required_fields = ["name", "specialization", "phoneNumber", "departmentName"]
-    with db_manager.get_db() as conn:
-        DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['departmentName']).one_or_none()
-    doctor_data['departmentID'] = DepartmentID
-    if missing_fields := [
-        field for field in required_fields if field not in doctor_data
-    ]:
-        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
-
-    try:
-        db_manager.insert_doctor(doctor_data)
-        return jsonify({'redirect': '/dashboard/admin'}), 201
-    except IntegrityError as e:
-        return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
-    except Exception as e:
-        print(f"Error creating doctor: {e}")
-        return jsonify({'message': 'Failed to create doctor'}), 500
-
-@api.route('/display/patients', methods=["GET"])
+@api.route('/patients/display', methods=["GET"])
 #@login_required
 def display_patients():
   patients = db_manager.get_all_patients()
   return render_template('display_patients.html', patients=patients)
+@api.route('/doctors/display', methods=["GET"])
+#@login_required
+def display_doctors():
+  doctors = db_manager.get_all_doctors()
+  return render_template('display_doctors.html', doctors=doctors)
 
-@api.route('/search/patients', methods=["GET"])
+@api.route('/patients/search', methods=["GET"])
 #@login_required
 def search_patients():
     query = request.args.get('query', '')
@@ -200,7 +212,7 @@ def replicate():
         print(f"Error replicating data: {e}")
         return jsonify({'message': 'Failed to replicate data'}), 500
 
-@api.route('/prescriptions/create', methods=['POST'])
+@api.route('/prescriptions', methods=['POST'])
 def add_prescription():
     try:
         if hasattr(current_user, 'UserID'):
@@ -235,7 +247,7 @@ def get_doctor_name():
     except Exception as e:
         return jsonify({'error': 'Failed to retrieve doctor name'}), 500
     
-@api.route("/appointments/", methods=["GET"])
+@api.route("/appointments/upcoming", methods=["GET"])
 def get_upcoming_appointments():
   doctor_id = current_user.UserID  # Get the doctor's ID
   appointments = db_manager.get_all_appointments()
@@ -253,8 +265,8 @@ def get_upcoming_appointments():
   return jsonify(upcoming_appointments), 200
 
 
-@api.route("/patients/", methods=["GET"])
-def get_patients():
+@api.route("/patients/recent", methods=["GET"])
+def get_recent_patients():
   doctor_id = current_user.UserID
   appointments = db_manager.get_appointments_by_doctor_id(doctor_id)
   today = datetime.today()

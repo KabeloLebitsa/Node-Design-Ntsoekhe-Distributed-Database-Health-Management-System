@@ -88,24 +88,24 @@
   </form>
 
   <script>
-document.getElementById("CreateDoctorForm").addEventListener("submit", function(event) {
+  document.getElementById("CreateDoctorForm").addEventListener("submit", function(event) {
   event.preventDefault(); // Prevent default form submission
 
   // Basic validation (similar to create_patient.html)
-  const name = document.getElementById("DoctorName").value.trim();
-  const phoneNumber = document.getElementById("PhoneNumber").value;
-  const specialization = document.getElementById("Specialization").value;
-  const departmentName = document.getElementById("Department").value;
-  const username = document.getElementById("Username").value.trim();
-  const password = document.getElementById("Password").value;
+  const DoctorName = document.getElementById("DoctorName").value.trim();
+  const Phone = document.getElementById("PhoneNumber").value;
+  const Specialization = document.getElementById("Specialization").value;
+  const DepartmentName = document.getElementById("Department").value;
+  const Username = document.getElementById("Username").value.trim();
+  const Password = document.getElementById("Password").value;
 
-  if (!name || !phoneNumber || !specialization || !departmentName || !username || !password) {
+  if (!DoctorName || !PhoneNumber || !Specialization || !DepartmentName || !Username || !Password) {
     alert("Please fill out all required fields");
     return;
   }
 
   // Create user first
-    fetch("/create/users", {
+    fetch("/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -120,7 +120,7 @@ document.getElementById("CreateDoctorForm").addEventListener("submit", function(
       } else {
 
         // If user is created successfully, create the doctor with user ID
-        fetch("/create/doctors", {
+        fetch("/doctors", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -133,11 +133,11 @@ document.getElementById("CreateDoctorForm").addEventListener("submit", function(
             alert(doctorData.error);
           } else if (doctorData.redirect) {
             alert("Doctor created successfully!")
-            window.location.href = patientData.redirect;
+            window.location.href = doctorData.redirect;
           } else if (doctorData.message) {
             alert(doctorData.message);
           } else {
-            console.error('Unexpected response:', patientData);
+            console.error('Unexpected response:', doctorData);
             alert('Creating doctor failed. Please try again.');
           }
         })

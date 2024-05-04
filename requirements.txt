@@ -8,3 +8,4 @@ Werkzeug==3.0.2
 flask_login
 requests
 sqlalchemy
+python-dateutil

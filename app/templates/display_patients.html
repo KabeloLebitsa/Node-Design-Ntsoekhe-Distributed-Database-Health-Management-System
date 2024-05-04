@@ -99,8 +99,8 @@
                 <td>{{ patient.Gender }}</td>
                 <td>{{ patient.PhoneNumber }}</td>
                 <td>
-                    <a href="/patients/update/{{ patient.PatientID }}" class="action-link update-link">Update</a> |
-                    <a href="/patients/delete/{{ patient.PatientID }}" class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</a>
+                    <a href="/patients/{{ patient.PatientID }}" class="action-link update-link">Update</a> |
+                    <a href="/patients/{{ patient.PatientID }}" class="action-link delete-link" data-id="{{ patient.PatientID }}">Delete</a>
                 </td>
             </tr>
             {% endfor %}

@@ -84,7 +84,7 @@
                 patientId: document.getElementById('patientId').value
             };
 
-            fetch('/prescriptions/create', {
+            fetch('/prescriptions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
