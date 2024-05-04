@@ -22,6 +22,7 @@ login_manager.login_view = 'login_page'
 
 # Required: Automatically ensure there is an admin user on App worker startup
 db_manager.ensure_admin_user()
+
 @login_manager.user_loader
 def load_user(user_id):
     with db_manager.get_db() as db:

@@ -11,6 +11,9 @@ from database import DatabaseManager
 api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
 
+valid_actions = ('create', 'update', 'delete')
+valid_object_types = ('patient', 'doctor', 'nurse')
+
 # Endpoint for creating a user
 @api.route('/create/users', methods=['POST'])
 #@login_required
@@ -114,10 +117,10 @@ def delete_patient(patient_id):
 #@login_required
 def create_doctor():
     doctor_data = request.get_json()
-    required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
+    required_fields = ["name", "specialization", "phoneNumber", "departmentName"]
     with db_manager.get_db() as conn:
-        DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['DepartmentName']).one_or_none()
-    doctor_data['DepartmentID'] = DepartmentID
+        DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['departmentName']).one_or_none()
+    doctor_data['departmentID'] = DepartmentID
     if missing_fields := [
         field for field in required_fields if field not in doctor_data
     ]:
@@ -155,11 +158,11 @@ def replicate():
           return jsonify({'message': 'Missing data'}), 400
 
         action = data.get('action')
-        if action not in ('create', 'update', 'delete'):
+        if action not in valid_actions:
           return jsonify({'message': 'Invalid action'}), 400
 
         ObjectType = data.get('ObjectType')
-        if ObjectType not in ('patient', 'doctor', 'nurse'):
+        if ObjectType not in valid_object_types:
           return jsonify({'message': 'Invalid object type'}), 400
 
         db_data = data.get('data')

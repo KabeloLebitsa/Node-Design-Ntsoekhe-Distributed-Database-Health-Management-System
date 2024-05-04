@@ -92,14 +92,14 @@ document.getElementById("CreateDoctorForm").addEventListener("submit", function(
   event.preventDefault(); // Prevent default form submission
 
   // Basic validation (similar to create_patient.html)
-  const DoctorName = document.getElementById("DoctorName").value.trim();
-  const Phone = document.getElementById("PhoneNumber").value;
-  const Specialization = document.getElementById("Specialization").value;
-  const DepartmentName = document.getElementById("Department").value;
-  const Username = document.getElementById("Username").value.trim();
-  const Password = document.getElementById("Password").value;
+  const name = document.getElementById("DoctorName").value.trim();
+  const phoneNumber = document.getElementById("PhoneNumber").value;
+  const specialization = document.getElementById("Specialization").value;
+  const departmentName = document.getElementById("Department").value;
+  const username = document.getElementById("Username").value.trim();
+  const password = document.getElementById("Password").value;
 
-  if (!DoctorName || !PhoneNumber || !Specialization || !DepartmentName || !Username || !Password) {
+  if (!name || !phoneNumber || !specialization || !departmentName || !username || !password) {
     alert("Please fill out all required fields");
     return;
   }

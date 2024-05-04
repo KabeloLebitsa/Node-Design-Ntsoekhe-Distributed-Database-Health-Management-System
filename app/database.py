@@ -1,6 +1,6 @@
 # database.py
 
-import datetime
+from dateutil.parser import parse
 import requests
 import socket
 import random
@@ -21,14 +21,13 @@ class DatabaseManager:
         self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
         self.NODES = Config.NODES
         self.MY_NODE_ID = socket.gethostname()
+        self.engine = create_engine(self.DATABASE_URL)
         
     def create_tables(self):
-        engine = create_engine(self.DATABASE_URL)
-        Base.metadata.create_all(engine)
+        Base.metadata.create_all(self.engine)
         
     def get_session(self):
-        engine = create_engine(self.DATABASE_URL)
-        Session = sessionmaker(bind=engine)
+        Session = sessionmaker(bind=self.engine)
         return Session()
 
     @contextmanager
@@ -38,13 +37,7 @@ class DatabaseManager:
             yield db
         finally:
             db.close()
-    def generate_user_id(self, role):
-        prefix = {'admin': 'a', 'patient': 'p', 'doctor': 'd', 'nurse': 'n'}
-        with self.get_db() as db:
-            while True:
-                user_id = prefix[role] + ''.join([str(random.randint(0, 9)) for _ in range(5)])
-                if not db.query(User).filter(User.UserID == user_id).one_or_none():
-                    return user_id
+            
     def ensure_admin_user(self):
         with self.get_db() as db:
             admin_user = db.query(User).filter(User.Username == 'admin').one_or_none()
@@ -56,6 +49,13 @@ class DatabaseManager:
                     db.commit()
                 except Exception as e:
                     print(f"Error occurred during commit: {e}")
+    def generate_user_id(self, role):
+        prefix = {'admin': 'a', 'patient': 'p', 'doctor': 'd', 'nurse': 'n'}
+        with self.get_db() as db:
+            while True:
+                user_id = prefix[role] + ''.join([str(random.randint(0, 9)) for _ in range(5)])
+                if not db.query(User).filter(User.UserID == user_id).one_or_none():
+                    return user_id
 
     def load_user(self, user_id):
         with self.get_db() as db:
@@ -65,7 +65,7 @@ class DatabaseManager:
         with self.get_db() as db:
             try:
                 if db.query(User).filter(User.Username == user['Username']).one_or_none():
-                    raise Exception('Username already exists')
+                    return jsonify({'error': 'Username already exists'}), 400
                 user_id = user.get('UserID') or self.generate_user_id(user['Role'])
                 username = user['Username']
                 password = user['Password']
@@ -75,16 +75,15 @@ class DatabaseManager:
                 db.commit()
                 # Replicate the data to other nodes
                 #self.replicate_data('insert', new_user.to_dict(), 'user')
-                return new_user.UserID
+                return jsonify({'user_id': new_user.UserID}), 201
             except Exception as e:
-                raise Exception(f"Error occurred during user insertion: {e}") from e
-
+                return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 500
     def insert_patient(self, patient):
         with self.get_db() as db:
             try:
                 patient_id = patient['PatientID']
                 name = patient['Name']
-                date_of_birth = datetime.datetime.strptime(patient['DateOfBirth'], '%Y-%m-%d').date()
+                date_of_birth = parse(patient['DateOfBirth']).date()
                 gender = patient['Gender']
                 phone_number = patient['PhoneNumber']
                 
@@ -103,20 +102,19 @@ class DatabaseManager:
             except Exception as e:
                 raise Exception(f"Error creating patient: {str(e)}") from e
                 
-    def insert_doctor(self, doctor):
+    def insert_doctor(self, doctor_data):
         with self.get_db() as db:
             try:
-                doctor_id = doctor['DoctorID']
-                name = doctor['DoctorName']
-                specialization = doctor['Specilization']
-                phone_number = doctor['PhoneNumber']
-                department_id = doctor['DepartmentID']
-                
-                new_doctor = Doctor(doctor_id, name, specialization, phone_number, department_id)
+                # Create an instance of Doctor using the dictionary data
+                new_doctor = Doctor(
+                    doctor_id=doctor_data['DoctorID'],
+                    name=doctor_data['name'],
+                    specialization=doctor_data['specialization'],
+                    phone_number=doctor_data['phoneNumber'],
+                    department_id=doctor_data['departmentID']
+                )
                 db.add(new_doctor)
                 db.commit()
-                # Replicate the data to other nodes
-                #self.replicate_data('insert', new_doctor.to_dict(), 'doctor')
                 return new_doctor.DoctorID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
@@ -220,7 +218,7 @@ class DatabaseManager:
         with self.get_db() as db:
             if doctor := db.query(Doctor).filter(Doctor.DoctorID == doctor_id).one_or_none():
                 db.delete(doctor)
-        db.commit() 
+        db.commit()
 
     def authenticate_user(self, username, password):
         try:
@@ -233,11 +231,10 @@ class DatabaseManager:
                     login_user(user)
                     return user
                 else:
-                    print("Invalid username or password.")
-                return None
+                    return jsonify({'error': "Invalid username or password."}), 401
         except Exception as e:
             print(f"Error occurred during authentication: {e}")
-            return None
+            return jsonify({'Error': str(e)}), 500
 
 
   
