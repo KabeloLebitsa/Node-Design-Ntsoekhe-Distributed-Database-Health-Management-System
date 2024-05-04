@@ -85,7 +85,7 @@ def create_doctor():
             new_doctor_id = db_manager.insert_doctor(new_doctor)
         return jsonify({'redirect': '/dashboard/admin', 'doctor_id': new_doctor_id}), 201
 
-    except (IntegrityError, Exception) as e:  # Catch both IntegrityError and generic exceptions
+    except (IntegrityError, Exception) as e: 
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 
