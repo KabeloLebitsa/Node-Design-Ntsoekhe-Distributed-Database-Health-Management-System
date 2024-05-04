@@ -9,7 +9,7 @@ networks:
           ip_range: 172.0.0.0/24
 
 services:
-  my_app1:
+  ntsoekhe-0:
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,7 +21,7 @@ services:
       my_network:
         ipv4_address: 172.0.0.1
 
-  my_app2:
+  ntsoekhe-1:
     build:
       context: .
       dockerfile: Dockerfile
@@ -33,7 +33,7 @@ services:
       my_network:
         ipv4_address: 172.0.0.2
 
-  my_app3:
+  ntsoekhe-2:
     build:
       context: .
       dockerfile: Dockerfile
@@ -45,7 +45,7 @@ services:
       my_network:
         ipv4_address: 172.0.0.3
 
-  my_app4:
+  ntsoekhe-3:
     build:
       context: .
       dockerfile: Dockerfile
@@ -57,7 +57,7 @@ services:
       my_network:
         ipv4_address: 172.0.0.4
 
-  my_app5:
+  ntsoekhe-4:
     build:
       context: .
       dockerfile: Dockerfile

@@ -37,6 +37,13 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(Username={self.Username}, Role={self.Role})>"
+    def to_dict(self):
+        return {
+            'UserID': self.UserID,
+            'Username': self.Username,
+            'Password': self.Password,
+            'Role': self.Role
+        }
 
 class Patient(Base):
   __tablename__ = 'patients'
@@ -51,11 +58,19 @@ class Patient(Base):
   prescriptions = relationship("Prescription", backref='patient')
   billings = relationship("Billing", backref='patient')
   def __init__(self, patient_id, name, date_of_birth, gender, phone_number):
-      self.PatientID = patient_id  
-      self.Name = name
-      self.DateOfBirth = date_of_birth
-      self.Gender = gender
-      self.PhoneNumber = phone_number
+    self.PatientID = patient_id  
+    self.Name = name
+    self.DateOfBirth = date_of_birth
+    self.Gender = gender
+    self.PhoneNumber = phone_number
+  def to_dict(self):
+    return {
+        'PatientID': self.PatientID,
+        'Name': self.Name,
+        'DateOfBirth': self.DateOfBirth.strftime('%Y-%m-%d'),
+        'Gender': self.Gender,
+        'PhoneNumber': self.PhoneNumber
+    }
 class Doctor(Base):
   __tablename__ = 'doctors'
 

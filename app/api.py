@@ -66,26 +66,26 @@ def create_patient():
 def create_doctor():
     doctor_data = request.get_json()
     required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
-    if missing_fields := [
-        field for field in required_fields if field not in doctor_data
-    ]:
-        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+    
+    if any(field not in doctor_data for field in required_fields):
+        return jsonify({'message': f'Missing required fields: {", ".join(required_fields)}'}), 400
 
     try:
         with db_manager.get_db() as db:
             DepartmentID = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
-        new_doctor = Doctor(
-        doctor_id=doctor_data['DoctorID'],
-        name=doctor_data['DoctorName'],
-        specialization=doctor_data['Specialization'],
-        phone_number=doctor_data['PhoneNumber'],
-        department_id=DepartmentID)
-        
-        db_manager.insert_doctor(new_doctor)
-        return jsonify({'redirect': '/dashboard/admin'}), 201
-    except IntegrityError as e:
-        return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
-    except Exception as e:
+            
+            new_doctor = Doctor(
+                doctor_id=doctor_data.get('DoctorID'),
+                name=doctor_data.get('DoctorName'),
+                specialization=doctor_data.get('Specialization'),
+                phone_number=doctor_data.get('PhoneNumber'),
+                department_id=DepartmentID
+            )
+
+            new_doctor_id = db_manager.insert_doctor(new_doctor)
+        return jsonify({'redirect': '/dashboard/admin', 'doctor_id': new_doctor_id}), 201
+
+    except (IntegrityError, Exception) as e:  # Catch both IntegrityError and generic exceptions
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 

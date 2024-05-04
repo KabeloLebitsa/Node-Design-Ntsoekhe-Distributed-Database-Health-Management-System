@@ -20,7 +20,7 @@ class DatabaseManager:
     def __init__(self):
         self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
         self.NODES = Config.NODES
-        self.MY_NODE_ID = socket.gethostname()
+        self.NODE_ID = socket.gethostname()
         self.engine = create_engine(self.DATABASE_URL)
         
     def create_tables(self):
@@ -75,7 +75,7 @@ class DatabaseManager:
                 db.add(new_user)
                 db.commit()
                 # Replicate the data to other nodes
-                #self.replicate_data('insert', new_user.to_dict(), 'user')
+                self.replicate_data('insert', new_user.to_dict(), 'user')
                 logging.info(f"User inserted successfully. ID: {new_user.UserID}")
                 return new_user.UserID
             except Exception as e:
@@ -94,7 +94,7 @@ class DatabaseManager:
                 db.add(new_patient)
                 db.commit()
                 # Replicate the data to other nodes
-                #self.replicate_data('insert', new_patient.to_dict(), 'patient')
+                self.replicate_data('insert', new_patient.to_dict(), 'patient')
                 return new_patient.PatientID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
@@ -108,19 +108,9 @@ class DatabaseManager:
     def insert_doctor(self, new_doctor):
         with self.get_db() as db:
             try:
-                with self.get_db() as db:
-                 '''   DepartmentID = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
- 
-                # Create an instance of Doctor using the dictionary data
-                new_doctor = Doctor(
-                    doctor_id=doctor_data['DoctorID'],
-                    name=doctor_data['DoctorName'],
-                    specialization=doctor_data['Specialization'],
-                    phone_number=doctor_data['PhoneNumber'],
-                    department_id=DepartmentID
-                )'''
                 db.add(new_doctor)
                 db.commit()
+                print("Start")
                 return new_doctor.DoctorID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
