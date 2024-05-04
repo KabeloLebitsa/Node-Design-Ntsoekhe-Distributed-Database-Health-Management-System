@@ -91,7 +91,7 @@ class DatabaseManager:
                 
                 hashed_password = hash_password(user['Password'])
                 password = hashed_password
-
+                
                 role = user['Role']
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
