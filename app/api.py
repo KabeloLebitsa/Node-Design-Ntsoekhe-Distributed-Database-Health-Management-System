@@ -39,7 +39,6 @@ def create_user():
         logging.error(f"Unexpected error: {str(e)}")
         return jsonify({'message': 'Internal server error'}), 503
 
-
 # Endpoint for creating a patient
 @api.route('/patients', methods=['POST'])
 #@login_required
@@ -61,6 +60,82 @@ def create_patient():
         print(f"Error creating patient: {e}")
         return jsonify({'message': 'Failed to create patient'}), 500
 
+# Endpoint for retrieving patient by ID
+@api.route('/patients/<int:patient_id>', methods=['GET'])
+#@login_required
+def get_patient_by_id(patient_id):
+    if patient := db_manager.get_patient_by_id(patient_id):
+        return jsonify(patient.serialize()), 200
+    else:
+        return jsonify({'message': f'Patient with ID {patient_id} not found'}), 404
+
+# Endpoint for updating patient
+@api.route('/patients/<string:patient_id>', methods=['PUT'])
+#@login_required
+def update_patient(patient_id):
+    update_data = request.get_json()
+    if not update_data:
+        return jsonify({'message': 'Missing update data'}), 400
+
+    try:
+        db_manager.update_patient(patient_id, update_data)
+        return jsonify({'message': 'Patient updated successfully'}), 200
+    except PatientNotFoundException as e:
+        return jsonify({'message': str(e)}), 404
+    except Exception as e:
+        print(f"Error updating patient: {e}")
+        return jsonify({'message': 'Failed to update patient'}), 500
+
+@api.route('/patients/<string:patient_id>', methods=['DELETE'])
+#@login_required
+def delete_patient(patient_id):
+  try:
+    patient = db_manager.get_patient_by_id(patient_id)
+    if not patient:
+      return jsonify({'message': 'Patient not found'}), 404
+    db_manager.delete_user(patient_id)
+    db_manager.delete_patient(patient_id)
+    return jsonify({'message': 'Patient deleted successfully'}), 200
+
+  except PatientNotFoundException as e:
+    return jsonify({'message': str(e)}), 404
+
+  except (IntegrityError, PatientDeletionError) as e:
+    return jsonify({'message': f"Error deleting patient: {str(e)}"}), 400
+
+  except Exception as e:  
+    print(f"Error deleting patient: {e}")
+    return jsonify({'message': 'Internal server error'}), 500
+
+  except:
+    return jsonify({'message': 'Unexpected error occurred'}), 500
+
+@api.route('/patients/display', methods=["GET"])
+#@login_required
+def display_patients():
+  patients = db_manager.get_all_patients()
+  return render_template('display_patients.html', patients=patients)
+
+@api.route('/patients/search', methods=["GET"])
+#@login_required
+def search_patients():
+    query = request.args.get('query', '')
+    with db_manager.get_db() as conn:
+        patients = conn.query(Patient).filter(Patient.Name.ilike(f'%{query}%')).all()
+    return render_template('display_patients.html', patients=patients)
+
+@api.route('/doctor/name')
+@login_required
+def get_doctor_name():
+    try:
+        doctor = db_manager.get_doctor_by_id(current_user.UserID)
+        if doctor is None:
+            return jsonify({'message': 'Doctor not found'}), 404
+        doctor_name = doctor.Name
+        return jsonify({'name': doctor_name}), 201
+    except Exception as e:
+        return jsonify({'error': 'Failed to retrieve doctor name'}), 500
+  
 @api.route('/doctors', methods=['POST'])
 #@login_required
 def create_doctor():
@@ -88,78 +163,12 @@ def create_doctor():
     except (IntegrityError, Exception) as e: 
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
-
-# Endpoint for retrieving patient by ID
-@api.route('/patients/<int:patient_id>', methods=['GET'])
-#@login_required
-def get_patient_by_id(patient_id):
-    if patient := db_manager.get_patient_by_id(patient_id):
-        return jsonify(patient.serialize()), 200
-    else:
-        return jsonify({'message': f'Patient with ID {patient_id} not found'}), 404
-
-
-# Endpoint for updating patient
-@api.route('/patients/<string:patient_id>', methods=['PUT'])
-#@login_required
-def update_patient(patient_id):
-    update_data = request.get_json()
-    if not update_data:
-        return jsonify({'message': 'Missing update data'}), 400
-
-    try:
-        db_manager.update_patient(patient_id, update_data)
-        return jsonify({'message': 'Patient updated successfully'}), 200
-    except PatientNotFoundException as e:
-        return jsonify({'message': str(e)}), 404
-    except Exception as e:
-        print(f"Error updating patient: {e}")
-        return jsonify({'message': 'Failed to update patient'}), 500
-
-
-@api.route('/patients/<string:patient_id>', methods=['DELETE'])
-#@login_required
-def delete_patient(patient_id):
-  try:
-    patient = db_manager.get_patient_by_id(patient_id)
-    if not patient:
-      return jsonify({'message': 'Patient not found'}), 404
-    db_manager.delete_user(patient_id)
-    db_manager.delete_patient(patient_id)
-    return jsonify({'message': 'Patient deleted successfully'}), 200
-
-  except PatientNotFoundException as e:
-    return jsonify({'message': str(e)}), 404
-
-  except (IntegrityError, PatientDeletionError) as e:
-    return jsonify({'message': f"Error deleting patient: {str(e)}"}), 400
-
-  except Exception as e:  
-    print(f"Error deleting patient: {e}")
-    return jsonify({'message': 'Internal server error'}), 500
-
-  except:
-    return jsonify({'message': 'Unexpected error occurred'}), 500
-
-
-@api.route('/patients/display', methods=["GET"])
-#@login_required
-def display_patients():
-  patients = db_manager.get_all_patients()
-  return render_template('display_patients.html', patients=patients)
+  
 @api.route('/doctors/display', methods=["GET"])
 #@login_required
 def display_doctors():
   doctors = db_manager.get_all_doctors()
   return render_template('display_doctors.html', doctors=doctors)
-
-@api.route('/patients/search', methods=["GET"])
-#@login_required
-def search_patients():
-    query = request.args.get('query', '')
-    with db_manager.get_db() as conn:
-        patients = conn.query(Patient).filter(Patient.Name.ilike(f'%{query}%')).all()
-    return render_template('display_patients.html', patients=patients)
 
 @api.route('/replicate/<action>/<ObjectType>', methods=['POST'])
 #@login_required
@@ -234,19 +243,7 @@ def add_prescription():
     
     except InternalServerError as e:
         return jsonify({'error': str(e)}), 500
-    
-@api.route('/doctor/name')
-@login_required
-def get_doctor_name():
-    try:
-        doctor = db_manager.get_doctor_by_id(current_user.UserID)
-        if doctor is None:
-            return jsonify({'message': 'Doctor not found'}), 404
-        doctor_name = doctor.Name
-        return jsonify({'name': doctor_name}), 201
-    except Exception as e:
-        return jsonify({'error': 'Failed to retrieve doctor name'}), 500
-    
+     
 @api.route("/appointments/upcoming", methods=["GET"])
 def get_upcoming_appointments():
   doctor_id = current_user.UserID  # Get the doctor's ID
@@ -263,7 +260,6 @@ def get_upcoming_appointments():
   upcoming_appointments = upcoming_appointments[:5]
 
   return jsonify(upcoming_appointments), 200
-
 
 @api.route("/patients/recent", methods=["GET"])
 def get_recent_patients():

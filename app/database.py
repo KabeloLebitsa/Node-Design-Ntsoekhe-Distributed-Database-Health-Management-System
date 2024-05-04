@@ -68,6 +68,7 @@ class DatabaseManager:
                     db.commit()
                 except Exception as e:
                     print(f"Error occurred during commit: {e}")
+  
     def generate_user_id(self, role):
         prefix = {'admin': 'a', 'patient': 'p', 'doctor': 'd', 'nurse': 'n'}
         with self.get_db() as db:
@@ -103,6 +104,7 @@ class DatabaseManager:
             except Exception as e:
                 logging.error(f"Error occurred during user insertion: {str(e)}")
                 return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 505
+ 
     def insert_patient(self, patient):
         with self.get_db() as db:
             try:
@@ -254,8 +256,6 @@ class DatabaseManager:
             print(f"Error occurred during authentication: {e}")
             return jsonify({'Error': str(e)}), 500
 
-
-  
     def replicate_data(self, action, data, ObjectType):
         for node in self.NODES:
             if node != self.NODE_ID:
@@ -298,6 +298,7 @@ class DatabaseManager:
     def get_all_appointments(self):
         with self.get_db() as db:
             return db.query(Appointment).all()
+ 
     def get_appointments_by_doctor_id(self, doctor_id):
         with self.get_db() as db:
             return db.query(Appointment).filter(Appointment.DoctorID == doctor_id).all()
