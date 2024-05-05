@@ -270,10 +270,78 @@ def delete_patient(patient_id):
     print(f"Error deleting patient: {e}")
     return jsonify({'message': 'Internal server error'}), 500
 
-  except:
-    return jsonify({'message': 'Unexpected error occurred'}), 500
 
-@api.route('/patients/display', methods=["GET"])
+@api.route('/patients/<string:patient_id>', methods=['DELETE'])
+#deleting patient across
+def delete_patient(patient_id):
+    # Flag to track if the deletion was successful on all nodes
+    all_success = True
+
+    # Iterate through each node
+    for node in Config.NODES:
+        try:
+            # Send a DELETE request to the current node
+            response = requests.delete(f"{node}/patients/{patient_id}")
+            print("tried node :",node)
+            # Check if the request was successful (status code 200 for delete)
+            if response.status_code != 200:
+                # Log an error message if the request failed
+                logging.error(f'Failed to delete patient on node {node}: {response.text}')
+                # Mark the replication as not successful
+                all_success = False
+        except Exception as e:
+            # Log the exception if an error occurs
+            logging.error(f'Error deleting patient on node {node}: {e}')
+            # Mark the replication as not successful
+            all_success = False
+
+    # Check if all deletions were successful
+    if all_success:
+        return jsonify({'message': 'Patient deleted successfully on all nodes'}), 200
+    else:
+        return jsonify({'message': 'Failed to delete patient on one or more nodes'}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Endpoint for creating a doctor
+@api.route('/create/doctors', methods=['POST'])
+#@login_required
+def create_doctor():
+    doctor_data = request.get_json()
+    required_fields = ["Name", "Specialization", "PhoneNumber", "DepartmentName"]
+    with db_manager.get_db() as conn:
+        DepartmentID = conn.query(Department).filter(Department.DepartmentName == doctor_data['DepartmentName']).one_or_none()
+    doctor_data['DepartmentID'] = DepartmentID
+    if missing_fields := [
+        field for field in required_fields if field not in doctor_data
+    ]:
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
+    try:
+        db_manager.insert_doctor(**doctor_data)
+        return jsonify({'redirect': '/dashboard/admin'}), 201
+    except IntegrityError as e:
+        return jsonify({'message': 'Failed to create doctor (data integrity issue)'}), 500
+    except Exception as e:
+        print(f"Error creating doctor: {e}")
+        return jsonify({'message': 'Failed to create doctor'}), 500
+
+@api.route('/display/patients', methods=["GET"])
 #@login_required
 def display_patients():
   patients = db_manager.get_all_patients()
