@@ -24,3 +24,7 @@ class Exception(Exception):
     pass
 class PatientDeletionError(Exception):
     pass
+class ReplicationError(Exception):
+    pass
+class PatientNotFoundError(Exception):
+    pass

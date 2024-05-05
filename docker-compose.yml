@@ -1,15 +1,7 @@
 version: '3'
-networks:
-  my_network:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.0.0.0/16
-          gateway: 172.0.0.254
-          ip_range: 172.0.0.0/24
-
 services:
   ntsoekhe-0:
+    container_name: ntsoekhe-0
     build:
       context: .
       dockerfile: Dockerfile
@@ -18,10 +10,11 @@ services:
     environment:
       - PORT=8081
     networks:
-      my_network:
+      ntoekhe-network:
         ipv4_address: 172.0.0.1
 
   ntsoekhe-1:
+    container_name: ntsoekhe-1
     build:
       context: .
       dockerfile: Dockerfile
@@ -30,10 +23,11 @@ services:
     environment:
       - PORT=8082
     networks:
-      my_network:
+      ntoekhe-network:
         ipv4_address: 172.0.0.2
-
+    
   ntsoekhe-2:
+    container_name: ntsoekhe-2
     build:
       context: .
       dockerfile: Dockerfile
@@ -42,10 +36,11 @@ services:
     environment:
       - PORT=8083
     networks:
-      my_network:
+      ntoekhe-network:
         ipv4_address: 172.0.0.3
-
+  
   ntsoekhe-3:
+    container_name: ntsoekhe-3
     build:
       context: .
       dockerfile: Dockerfile
@@ -54,10 +49,11 @@ services:
     environment:
       - PORT=8084
     networks:
-      my_network:
+      ntoekhe-network:
         ipv4_address: 172.0.0.4
-
+  
   ntsoekhe-4:
+    container_name: ntsoekhe-4
     build:
       context: .
       dockerfile: Dockerfile
@@ -66,5 +62,13 @@ services:
     environment:
       - PORT=8085
     networks:
-      my_network:
-        ipv4_address: 172.0.1.5
+      ntoekhe-network:
+        ipv4_address: 172.0.0.5
+networks:
+  ntoekhe-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.0.0.0/16
+          gateway: 172.0.0.254
+          ip_range: 172.0.0.0/24

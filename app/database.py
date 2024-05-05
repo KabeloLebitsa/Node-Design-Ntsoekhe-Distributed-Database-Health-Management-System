@@ -4,24 +4,28 @@ from dateutil.parser import parse
 import requests
 import socket
 import random
+import logging
+import memcache
+from utils import ReplicationStrategy
+from collections import namedtuple
 from sqlite3 import IntegrityError
-from flask import jsonify
+from flask import json, jsonify
 from config import Config
+from uuid import uuid4
 from flask_login import login_user
 from contextlib import contextmanager
 from sqlalchemy import create_engine, Table, Column, MetaData, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker
 from models import Base, Patient, Doctor, User, Prescription, Appointment, Department
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
-import logging
 
 # Database manager class
 class DatabaseManager:
     def __init__(self):
         self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
-        self.NODES = Config.NODES
         self.NODE_ID = socket.gethostname()
         self.engine = create_engine(self.DATABASE_URL)
+        self.replication_strategy = ReplicationStrategy()
         
     def create_tables(self):
         Base.metadata.create_all(self.engine)
@@ -61,7 +65,7 @@ class DatabaseManager:
         with self.get_db() as db:
             return db.query(User).get(user_id)
 
-    def insert_user(self, user):
+    def insert_user(self, user, request_id):
         with self.get_db() as db:
             try:
                 if db.query(User).filter(User.Username == user['Username']).one_or_none():
@@ -74,14 +78,18 @@ class DatabaseManager:
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
                 db.commit()
+                
                 # Replicate the data to other nodes
-                self.replicate_data('insert', new_user.to_dict(), 'user')
+                if request_id is None:
+                    request_id = uuid4().hex
+                self.replication_strategy.replicate('insert', new_user.to_dict(), 'user', request_id)
+                
                 logging.info(f"User inserted successfully. ID: {new_user.UserID}")
                 return new_user.UserID
             except Exception as e:
                 logging.error(f"Error occurred during user insertion: {str(e)}")
                 return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 505
-    def insert_patient(self, patient):
+    def insert_patient(self, patient, request_id):
         with self.get_db() as db:
             try:
                 patient_id = patient['PatientID']
@@ -94,7 +102,9 @@ class DatabaseManager:
                 db.add(new_patient)
                 db.commit()
                 # Replicate the data to other nodes
-                self.replicate_data('insert', new_patient.to_dict(), 'patient')
+                if request_id is None:
+                    request_id = uuid4().hex
+                self.replicate_data('insert', new_patient.to_dict(), 'patient', request_id)
                 return new_patient.PatientID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
@@ -233,17 +243,6 @@ class DatabaseManager:
             return jsonify({'Error': str(e)}), 500
 
 
-  
-    def replicate_data(self, action, data, ObjectType):
-        for node in self.NODES:
-            if node != self.NODE_ID:
-                try:
-                    url = f"https://{node}/replicate/{action}/{ObjectType}"
-                    data_with_type = {'data': data, 'ObjectType': ObjectType}
-                    response = requests.post(url, json=data_with_type)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    return jsonify({"error": f"Error replicating data to node {node}: {str(e)}"}), 500
                 
     def insert_prescription(self, prescription):
         with self.get_db() as db:
@@ -279,3 +278,4 @@ class DatabaseManager:
     def get_appointments_by_doctor_id(self, doctor_id):
         with self.get_db() as db:
             return db.query(Appointment).filter(Appointment.DoctorID == doctor_id).all()
+                

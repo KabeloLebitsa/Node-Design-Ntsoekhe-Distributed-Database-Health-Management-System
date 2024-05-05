@@ -6,13 +6,14 @@ import logging
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
     SECRET_KEY = os.urandom(32)
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    NODES = [
-        'https://172.0.0.1:8081',
-        'https://172.0.0.2:8082',
-        'https://172.0.0.3:8083',
-        'https://172.0.0.4:8084',
-        'https://172.0.0.5:8085'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False       
+    REQUEST_CACHE_EXPIRY_SECONDS = 300  
+    REPLICATION_NODES = [
+        'http://127.0.0.1:8081',
+        'http://172.0.0.2:8082',
+        'http://172.0.0.3:8083',
+        'http://172.0.0.4:8084',
+        'http://172.0.0.5:8085'
     ]
 
 class DevelopmentConfig(Config):
@@ -22,24 +23,33 @@ class TestingConfig(Config):
     TESTING = True
 
 class ProductionConfig(Config):
-    pass 
     LOGGING = {
         'version': 1,
-        'format': '%(asctime)s %(levelname)s %(message)s',
-        'handlers': ['file'],
+        'disable_existing_loggers': False,
+        'formatters': {
+            'standard': {
+                'format': '%(asctime)s %(levelname)s %(message)s'
+            },
+        },
+        'handlers': {
+            'file': {
+                'level': 'DEBUG',
+                'class': 'logging.FileHandler',
+                'filename': 'app.log',
+                'mode': 'a',
+                'formatter': 'standard',
+            },
+        },
         'loggers': {
             'app': {
+                'handlers': ['file'],
                 'level': 'INFO',
-                'handlers': ['file']
-            }
-        },
-        'file': {
-            'level': 'DEBUG',
-            'filename': 'app.log',
-            'mode': 'a'
+                'propagate': False,
+            },
         }
     }
-      # Add production-specific configurations here (e.g., logging, security)
+
+    # Add production-specific configurations here (e.g., security settings)
 
 def get_app_config(environment):
     if environment == 'development':

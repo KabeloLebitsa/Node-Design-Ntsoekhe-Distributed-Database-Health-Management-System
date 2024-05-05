@@ -12,9 +12,6 @@ import logging
 api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
 
-valid_actions = ('create', 'update', 'delete')
-valid_object_types = ('patient', 'doctor', 'nurse')
-
 # Endpoint for creating a user
 @api.route('/users', methods=['POST'])
 #@login_required
@@ -23,7 +20,7 @@ def create_user():
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        user_id = db_manager.insert_user(user_data)
+        user_id = db_manager.insert_user(user_data, request_id=None)
         logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
@@ -53,7 +50,7 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        db_manager.insert_patient(patient_data)
+        db_manager.insert_patient(patient_data, request_id=None)
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
@@ -64,7 +61,7 @@ def create_patient():
 @api.route('/doctors', methods=['POST'])
 #@login_required
 def create_doctor():
-    doctor_data = request.get_json()
+    doctor_data = request.get_json(silent=True)
     required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
     
     if any(field not in doctor_data for field in required_fields):
@@ -86,7 +83,7 @@ def create_doctor():
         return jsonify({'redirect': '/dashboard/admin', 'doctor_id': new_doctor_id}), 201
 
     except (IntegrityError, Exception) as e: 
-        print(f"Error creating doctor: {e}")
+        logging.error(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 
 # Endpoint for retrieving patient by ID
@@ -161,56 +158,57 @@ def search_patients():
         patients = conn.query(Patient).filter(Patient.Name.ilike(f'%{query}%')).all()
     return render_template('display_patients.html', patients=patients)
 
-@api.route('/replicate/<action>/<ObjectType>', methods=['POST'])
+@api.route('/replicate/', methods=['POST'])
 #@login_required
-def replicate():
+def handle_replicate():
     try:
         data = request.get_json()
         if not data:
-          return jsonify({'message': 'Missing data'}), 400
+            logging.warning("No data provided in the request")
+            return jsonify({'message': 'No data provided'}), 400
 
         action = data.get('action')
-        if action not in valid_actions:
-          return jsonify({'message': 'Invalid action'}), 400
-
-        ObjectType = data.get('ObjectType')
-        if ObjectType not in valid_object_types:
-          return jsonify({'message': 'Invalid object type'}), 400
-
+        object_type = data.get('object_type')
         db_data = data.get('data')
+
         if not db_data:
-          return jsonify({'message': 'Missing data to process'}), 400
+            logging.warning("Missing data to process for action: {action}, object_type: {object_type}")
+            return jsonify({'message': 'Missing data to process'}), 400
 
-        action_method_map = {          
-           'user': {
-            'create': db_manager.insert_user,
-            'delete': db_manager.delete_user,
-          },
-          'patient': {
-            'create': db_manager.insert_patient,
-            'update': db_manager.update_patient,
-            'delete': db_manager.delete_patient,
-          },
-          'doctor': { 
-            'create': db_manager.insert_doctor,  
-            'update': db_manager.update_doctor,
-            'delete': db_manager.delete_doctor,
-          },
-          'nurse': {
-            # ...
-          }
+        logging.info(f"Processing action {action} for object_type {object_type}")
+
+        action_method_map = {
+            'user': {
+                'insert': db_manager.insert_user,
+                'delete': db_manager.delete_user,
+            },
+            'patient': {
+                'insert': db_manager.insert_patient,
+                'update': db_manager.update_patient,
+                'delete': db_manager.delete_patient,
+            },
+            'doctor': {
+                'insert': db_manager.insert_doctor,
+                'update': db_manager.update_doctor,  
+                'delete': db_manager.delete_doctor,
+            },
         }
-
-        action_method = action_method_map.get(ObjectType).get(action)
+        request_id = data.get('request_id')
+        action_method = action_method_map.get(object_type, {}).get(action)
         if not action_method:
-          return jsonify({'message': 'Unsupported action-object type combination'}), 400
+            logging.error(f"Unsupported action-object type combination: {action} with {object_type}")
+            return jsonify({'message': 'Unsupported action-object type combination'}), 400
 
-        action_method(db_data)
+        logging.info(f"Executing {action} for {object_type} with request ID {request_id}")
+        action_method(db_data, request_id)  # Call the appropriate database method
 
-        return jsonify({'message': f'{ObjectType} {action}d successfully'}), 201
+        logging.info(f"{object_type} {action}d successfully")
+        return jsonify({'message': f'{object_type} {action}d successfully'}), 201
+
     except Exception as e:
-        print(f"Error replicating data: {e}")
+        logging.error(f"Unexpected error while replicating data: {str(e)}")
         return jsonify({'message': 'Failed to replicate data'}), 500
+
 
 @api.route('/prescriptions', methods=['POST'])
 def add_prescription():
