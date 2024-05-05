@@ -71,6 +71,7 @@
       <option value="Pediatrics">Pediatrics</option>
       <option value="Neurology">Neurology</option>
     </select>
+
     <select id="Department" required>
       <option value="" disabled selected>Select Department</option>
       <option value="Emergency">Emergency</option>
@@ -81,7 +82,9 @@
       <option value="Pathology">Pathology</option>
       <option value="Neurology">Neurology</option>
     </select>
+
     <h3>Login Information</h3>
+
     <input type="text" id="Username" placeholder="Username" required>
     <input type="password" id="Password" placeholder="Password" required>
     <button type="submit">Create Doctor</button>
@@ -131,12 +134,15 @@
         .then(doctorData => {
           if (doctorData.error) {
             alert(doctorData.error);
-          } else if (doctorData.redirect) {
+          } 
+          else if (doctorData.redirect) {
             alert("Doctor created successfully!")
             window.location.href = doctorData.redirect;
-          } else if (doctorData.message) {
+          } 
+          else if (doctorData.message) {
             alert(doctorData.message);
-          } else {
+          } 
+          else {
             console.error('Unexpected response:', doctorData);
             alert('Creating doctor failed. Please try again.');
           }

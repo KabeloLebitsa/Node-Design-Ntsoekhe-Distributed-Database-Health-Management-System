@@ -9,4 +9,3 @@ flask_login
 requests
 sqlalchemy
 python-dateutil
-python-memcached

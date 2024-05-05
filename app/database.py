@@ -5,9 +5,7 @@ import requests
 import socket
 import random
 import logging
-import memcache
 from utils import ReplicationStrategy
-from collections import namedtuple
 from sqlite3 import IntegrityError
 from flask import json, jsonify
 from config import Config
@@ -19,6 +17,25 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, Patient, Doctor, User, Prescription, Appointment, Department
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
 
+
+
+import hashlib
+
+def hash_password(password):
+        # Encode the password string to bytes
+    password_bytes = password.encode('utf-8')
+
+        # Create a SHA-256 hash object
+    hash_object = hashlib.sha256()
+
+        # Update the hash object with the password bytes
+    hash_object.update(password_bytes)
+
+        # Get the hexadecimal representation of the hash
+    hashed_password = hash_object.hexdigest()
+
+    return hashed_password
+   
 # Database manager class
 class DatabaseManager:
     def __init__(self):
@@ -53,6 +70,7 @@ class DatabaseManager:
                     db.commit()
                 except Exception as e:
                     print(f"Error occurred during commit: {e}")
+  
     def generate_user_id(self, role):
         prefix = {'admin': 'a', 'patient': 'p', 'doctor': 'd', 'nurse': 'n'}
         with self.get_db() as db:
@@ -73,7 +91,10 @@ class DatabaseManager:
                     return jsonify({'error': 'Username already exists'}), 400
                 user_id = user.get('UserID') or self.generate_user_id(user['Role'])
                 username = user['Username']
-                password = user['Password']
+                
+                hashed_password = hash_password(user['Password'])
+                password = hashed_password
+                
                 role = user['Role']
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
@@ -89,7 +110,7 @@ class DatabaseManager:
             except Exception as e:
                 logging.error(f"Error occurred during user insertion: {str(e)}")
                 return jsonify({'error': f"Error occurred during user insertion: {str(e)}"}), 505
-    def insert_patient(self, patient, request_id):
+    def insert_patient(self, patient):
         with self.get_db() as db:
             try:
                 patient_id = patient['PatientID']
@@ -243,6 +264,17 @@ class DatabaseManager:
             return jsonify({'Error': str(e)}), 500
 
 
+  
+    def replicate_data(self, action, data, ObjectType):
+        for node in self.NODES:
+            if node != self.NODE_ID:
+                try:
+                    url = f"https://{node}/replicate/{action}/{ObjectType}"
+                    data_with_type = {'data': data, 'ObjectType': ObjectType}
+                    response = requests.post(url, json=data_with_type)
+                    response.raise_for_status()
+                except requests.exceptions.RequestException as e:
+                    return jsonify({"error": f"Error replicating data to node {node}: {str(e)}"}), 500
                 
     def insert_prescription(self, prescription):
         with self.get_db() as db:
@@ -275,6 +307,7 @@ class DatabaseManager:
     def get_all_appointments(self):
         with self.get_db() as db:
             return db.query(Appointment).all()
+ 
     def get_appointments_by_doctor_id(self, doctor_id):
         with self.get_db() as db:
             return db.query(Appointment).filter(Appointment.DoctorID == doctor_id).all()
