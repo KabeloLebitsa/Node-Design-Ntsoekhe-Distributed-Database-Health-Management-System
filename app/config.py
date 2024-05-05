@@ -6,10 +6,10 @@ import logging
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
     SECRET_KEY = os.urandom(32)
-    SQLALCHEMY_TRACK_MODIFICATIONS = False       
-    REQUEST_CACHE_EXPIRY_SECONDS = 300  
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    NODES =['http://127.0.0.1:5000']
     REPLICATION_NODES = [
-        'http://127.0.0.1:8081',
+        'http://172.0.0.1:8081',
         'http://172.0.0.2:8082',
         'http://172.0.0.3:8083',
         'http://172.0.0.4:8084',

@@ -2,27 +2,37 @@
 
 import datetime
 from sqlite3 import IntegrityError
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template,current_app
 from flask_login import login_required, current_user
 from exceptions import PatientDeletionError, PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
 from models import Patient, Doctor, Nurse, Department, Appointment, Prescription, Billing, User
 from database import DatabaseManager
 import logging
-
+import requests
+from config import Config
+import json
+import logging
 api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
 
-# Endpoint for creating a user
-@api.route('/users', methods=['POST'])
-#@login_required
-def create_user():
-    user_data = request.get_json()
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
+# Create a logger instance
+logger = logging.getLogger(__name__)
+
+def create_user(user_data):
+    # Get the patient data from the request body
+    #user_data = request.get_json()
     if not user_data:
-        return jsonify({'message': 'Missing user data'}), 400
+        return jsonify ({"message":"Missing user data"}),400
+
+    # Create the patient locally
     try:
-        user_id = db_manager.insert_user(user_data, request_id=None)
-        logging.info(f"User created successfully. ID: {user_id}")
-        return jsonify({'UserID': user_id}), 201
+        user_id = db_manager.insert_user(user_data)
+        return user_id
     except InvalidRequestException as e:
         logging.error(f"Invalid request: {str(e)}")
         return jsonify({'message': str(e)}), 400
@@ -30,17 +40,14 @@ def create_user():
         logging.error(f"Database integrity error: {str(e)}")
         return jsonify({'message': str(e)}), 501
     except InternalServerError as e:
-        logging.error(f"Internal server error: {str(e)}")
-        return jsonify({'message': 'Failed to create user'}), 502
+        print(f"Error creating user: {e}")
+        return jsonify({'message': 'Failed to create user'}), 500
     except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
-        return jsonify({'message': 'Internal server error'}), 503
+        print(f"Unexpected error: {e}")
+        return jsonify({'message': 'Internal server error'}), 502
 
-# Endpoint for creating a patient
-@api.route('/patients', methods=['POST'])
-#@login_required
-def create_patient():
-    patient_data = request.get_json()
+def create_patient(patient_data):
+    #patient_data = request.get_json()
     required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
 
     if missing_fields := [
@@ -49,41 +56,171 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        db_manager.insert_patient(patient_data, request_id=None)
-        return jsonify({'redirect': '/dashboard/admin'}), 201
+        db_manager.insert_patient(patient_data)
+       # return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
     except Exception as e:
         print(f"Error creating patient: {e}")
         return jsonify({'message': 'Failed to create patient'}), 500
 
-@api.route('/doctors', methods=['POST'])
-#@login_required
-def create_doctor():
-    doctor_data = request.get_json()
-    required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
+@api.route('/create/user_patient', methods=['POST'])
+def create_user_patient():
+    # Get the combined data from the request
     
-    if any(field not in doctor_data for field in required_fields):
-        return jsonify({'message': f'Missing required fields: {", ".join(required_fields)}'}), 400
-
+    data = request.get_json()
+    
+    # Extract user and patient data from the combined data
+    user_data = {
+        "Username": data.get("Username"),
+        "Password": data.get("Password"),
+        "Role": "patient"
+    }
+    patient_data = {
+        "Name": data.get("Name"),
+        "DateOfBirth": data.get("DateOfBirth"),
+        "Gender": data.get("Gender"),
+        "PhoneNumber": data.get("PhoneNumber"),
+        "PatientID": None  # Placeholder for the user ID
+    }
+    
     try:
-        with db_manager.get_db() as db:
-            DepartmentID = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
+        # Create the user and get the user ID
+          # Implement this function to handle user creation in the database
+        user_id =create_user(user_data)
+
+        patient_data["PatientID"] = user_id
+        
+    #     # Create the patient using the user ID
+        create_patient(patient_data)  # Implement this function to handle patient creation in the database
+        
+    #     return jsonify({"message": "User and patient created successfully"}), 201
+    except Exception as e:
+    #     # Handle any errors that may occur during the process
+        print(f"Unexpected error: {e}")
+        return jsonify({"error": f"Error creating user and patient: {e}"}), 500
+    return jsonify({'message': 'Patient created successfully' }), 201
+
+
+#REPLICATION 
+@api.route('/create/replicate', methods=['POST'])
+def replicate_user_patients():
+    # Get the patient data from the request body
+    patient_data = request.get_json()
+
+    # Send patient data to other nodes including self
+    all_success = True
+
+    for node in Config.REPLICATION_NODES:
+        try:
+            response = requests.post(f"{node}/create/user_patient", json=patient_data)
+            if response.status_code != 201:
+                #print("TRYING TO REPLICATE BUT FAILS \n\n")# Log error and mark the replication as failed
+                logging.error(f'Failed to replicate patient to node {node}: {response.text}')
+                all_success = False
+        except Exception as e:
+            # Log exception and mark the replication as failed
+            logging.error(f'Error replicating patient to node {node}: {e}')
+            all_success = False
+
+    if all_success:
+        return jsonify({'message': 'patient created successfully'}), 201
+    else:
+        return jsonify({'message': 'Replication failed to one or more nodes'}), 500
+
+
+
+
+
+
+# def create_patients():
+     
+#     # Get the patient data from the request body
+#     patient_data = request.get_json()
+    
+#     #  # Send patient data to other nodes including self
+#     for node in Config.NODES:
+        
+#         try:
+#             response = requests.post(f"{node}/create/user_patient", json=patient_data)
             
-            new_doctor = Doctor(
-                doctor_id=doctor_data.get('DoctorID'),
-                name=doctor_data.get('DoctorName'),
-                specialization=doctor_data.get('Specialization'),
-                phone_number=doctor_data.get('PhoneNumber'),
-                department_id=DepartmentID
-            )
+#            # print("START")
+#             if response.status_code != 201:
+#                 #logging.error(f'Failed to replicate patient to node {node}: {response.text}')
+#                 return jsonify({'message': 'failed to establish connection'}), 501
+#         except Exception as e:
+#             logging.error(f'Error replicating patient to node {node}: {e}')
+#             return jsonify({'message': 'patient  with error :{e}'}), 500
+#         # Return a response indicating success
+#        # print("STARTingASFHAHEGFWAHJAMafdmafdgmJ\n\n")
+#     return jsonify({'message': 'patient created successfully'}), 201
+#     '''
 
-            new_doctor_id = db_manager.insert_doctor(new_doctor)
-        return jsonify({'redirect': '/dashboard/admin', 'doctor_id': new_doctor_id}), 201
 
-    except (IntegrityError, Exception) as e: 
-        print(f"Error creating doctor: {e}")
-        return jsonify({'message': 'Failed to create doctor'}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#@api.route('/create/users', methods=['POST'])
+'''
+@api.route('/create', methods=['POST'])
+def create_the_patient():  
+    # Get the patient data from the request body
+    patient_data = request.get_json()
+    
+     # Send patient data to other nodes including self
+    for node in Config.NODES:
+        try:
+
+            response = requests.post(f'{node}/create/patients', json=patient_data)
+            
+            if response.status_code != 201:
+                api.logger.error(f'Failed to replicate patient to node {node}: {response.text}')
+        except Exception as e:
+            api.logger.error(f'Error replicating patient to node {node}: {e}')
+            #return jsonify({"message":"error"})
+
+    # Return a response indicating success
+    
+    return jsonify({'message': 'patient created successfully'}), 201
+
+#--------------------------------------------------------------------------------
+'''
+
+
+# Endpoint for creating a patient
+#@api.route('/create/patients', methods=['POST'])
+#@login_required
+
 
 # Endpoint for retrieving patient by ID
 @api.route('/patients/<int:patient_id>', methods=['GET'])
@@ -110,6 +247,7 @@ def update_patient(patient_id):
     except Exception as e:
         print(f"Error updating patient: {e}")
         return jsonify({'message': 'Failed to update patient'}), 500
+
 
 @api.route('/patients/<string:patient_id>', methods=['DELETE'])
 #@login_required

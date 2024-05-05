@@ -77,7 +77,7 @@
     document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent default form submission
 
-    // Get all form values
+    // Basic validation
     const Name = document.getElementById("Name").value.trim();
     const DateOfBirth = document.getElementById("DateOfBirth").value;
     const Gender = document.getElementById("Gender").value;
@@ -85,54 +85,60 @@
     const Username = document.getElementById("Username").value.trim();
     const Password = document.getElementById("Password").value;
 
-    // Basic validation
     if (!Name || !DateOfBirth || !Gender || !PhoneNumber || !Username || !Password) {
-        alert("Please fill out all required fields");
-        return;
+      alert("Please fill out all required fields");
+      return;
     }
 
-    // Combine all the data
-    const requestData = {
-        Name,
-        DateOfBirth,
-        Gender,
-        PhoneNumber,
-        Username,
-        Password,
-        Role : "patient"
-    };
-
-    // body: JSON.stringify({ Name, DateOfBirth, Gender, PhoneNumber, PatientID: userData.UserID})
-    // body: JSON.stringify({ Username, Password, Role: "patient" })
-
-
-    // Send a single POST request with all the data
-    fetch("/create/replicate", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(requestData)
+    // Create user first
+    fetch("/create/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ Username, Password, Role: "patient" })
     })
     .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else if (data.message) {
-            alert(data.message);
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-        } else {
-            console.error('Unexpected response:', data);
-            alert('Operation failed. Please try again.');
-        }
+    .then(userData => {
+      if (userData.error) {
+        alert(userData.error);
+        return; // Stop if user creation fails
+       } 
+       else {
+
+        // If user is created successfully, create the patient with user ID
+        fetch("/create/patients", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ Name, DateOfBirth, Gender, PhoneNumber, PatientID: userData.UserID})
+        })
+        .then(response => response.json())
+        .then(patientData => {
+          if (patientData.error) {
+            alert(patientData.error);
+          } else if (patientData.redirect) {
+            alert("Patient created successfully!")
+            window.location.href = patientData.redirect;
+          } else if (patientData.message) {
+            alert(patientData.message);
+          } else {
+            console.error('Unexpected response:', patientData);
+            alert('Creating patient failed. Please try again.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error creating patient: ' + error);
+        });
+      }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error submitting data: ' + error);
+      console.error('Error:', error);
+      alert('Error creating user: ' + error);
     });
-});
-</script>
+  });
+  </script>
 </body>
 </html>
