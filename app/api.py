@@ -107,7 +107,7 @@ def create_user_patient():
 def replicate_user_patients():
     # Get the patient data from the request body
     patient_data = request.get_json()
-
+    
     # Send patient data to other nodes including self
     all_success = True
 
