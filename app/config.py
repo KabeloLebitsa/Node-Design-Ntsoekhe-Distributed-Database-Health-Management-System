@@ -10,7 +10,7 @@ class Config:
     REQUEST_CACHE_EXPIRY_SECONDS = 300 
     DATA_DIR = "data" 
     NODES = [
-        'http://172.0.0.1:8081',
+        #'http://172.0.0.1:8081',
         'http://172.0.0.2:8082',
         'http://172.0.0.3:8083',
         'http://172.0.0.4:8084',

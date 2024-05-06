@@ -26,9 +26,9 @@ def create_user():
         user_id = db_manager.insert_user(user_data)        
         
         # Replicate the data to other nodes
-        '''user_data['UserID'] = user_id
+        user_data['UserID'] = user_id
         request_id = uuid4().hex
-        replication_strategy.replicate('insert', user_data, 'user', request_id)'''
+        replication_strategy.replicate('insert', user_data, 'user', request_id)
         
         logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
@@ -220,9 +220,9 @@ def create_doctor():
     try:
         doctor_id = db_manager.insert_doctor(doctor_data)
         # Replicate the data to other nodes
-        '''doctor_data.update({'DoctorID': doctor_id})
+        doctor_data.update({'DoctorID': doctor_id})
         request_id = uuid4().hex
-        replication_strategy.replicate('insert', doctor_data, 'doctor', request_id)'''
+        replication_strategy.replicate('insert', doctor_data, 'doctor', request_id)
         logging.info(f'Doctor created with ID: {doctor_id}')
         return jsonify({'redirect': '/dashboard/admin', 'doctor_id': doctor_id}), 201
 

@@ -49,7 +49,8 @@ class DatabaseManager:
             admin_user = db.query(User).filter(User.Username == 'admin').one_or_none()
             if not admin_user:
                 admin_id = self.generate_user_id('admin')
-                new_admin = User(admin_id, 'admin', 'admin123', 'admin') 
+                password = self.hash_password('admin123')
+                new_admin = User(admin_id, 'admin', password, 'admin') 
                 db.add(new_admin)
                 try:
                     db.commit()
@@ -230,12 +231,17 @@ class DatabaseManager:
     def authenticate_user(self, username, password):
         try:
             with self.get_db() as db:
-                user = db.query(User).filter(User.Username == username).one_or_none()
-                if user and user.Password == password:
-                    user.IsAuthenticated = True
-                    user.IsActive = True
-                    user.IsAnonymous = False
-                    login_user(user)
+                if (
+                    user := db.query(User)
+                    .filter(User.Username == username)
+                    .one_or_none()
+                ):
+                    password_hash = self.hash_password(password)
+                    if user.Password == password_hash:
+                        user.IsAuthenticated = True
+                        user.IsActive = True
+                        user.IsAnonymous = False
+                        login_user(user)
                     return user
                 else:
                     return jsonify({'error': "Invalid username or password."}), 401
