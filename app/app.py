@@ -8,12 +8,14 @@ from database import DatabaseManager
 from models import User
 from api import api
 
+
 db_manager = DatabaseManager()
 db_manager.create_tables()
 
 app = Flask(__name__)
 # Initialize Flask-Login
-app.config.from_object(app_config)
+
+app.config.from_object(app_config) 
 app.register_blueprint(api)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -119,6 +121,6 @@ def create_prescription():
 # Main function
 if __name__ == '__main__':
     debug_mode = app_config.DEBUG
-    host = os.environ.get('HOST', '0.0.0.0')
+    #host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
-    app.run(host=host, port=port, debug=debug_mode)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)

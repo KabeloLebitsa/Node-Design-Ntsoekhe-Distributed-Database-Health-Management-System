@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose the port on which the API will run
-EXPOSE 80
+#EXPOSE 8081 8082 8083 8084 8085
 
 # Command to run when the container starts
 CMD ["python", "app/app.py", "--host=0.0.0.0"]

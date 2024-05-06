@@ -1,0 +1,3 @@
+sqlacheamy creates the abstraction of writinng the raw query ,which tends to be language specific and provide api that are consisted across different 
+databases it supports , thus supporting homogenity. Having sqlite db communicate to posgress db ,yes you guessed it right the 
+Wrapper 

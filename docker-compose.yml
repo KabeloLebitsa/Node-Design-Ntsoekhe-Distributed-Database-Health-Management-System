@@ -10,7 +10,7 @@ services:
     environment:
       - PORT=8081
     networks:
-      ntoekhe-network:
+      ntsoekhe-network:
         ipv4_address: 172.0.0.1
 
   ntsoekhe-1:
@@ -23,7 +23,7 @@ services:
     environment:
       - PORT=8082
     networks:
-      ntoekhe-network:
+      ntsoekhe-network:
         ipv4_address: 172.0.0.2
     
   ntsoekhe-2:
@@ -36,7 +36,7 @@ services:
     environment:
       - PORT=8083
     networks:
-      ntoekhe-network:
+      ntsoekhe-network:
         ipv4_address: 172.0.0.3
   
   ntsoekhe-3:
@@ -49,7 +49,7 @@ services:
     environment:
       - PORT=8084
     networks:
-      ntoekhe-network:
+      ntsoekhe-network:
         ipv4_address: 172.0.0.4
   
   ntsoekhe-4:
@@ -62,10 +62,10 @@ services:
     environment:
       - PORT=8085
     networks:
-      ntoekhe-network:
+      ntsoekhe-network:
         ipv4_address: 172.0.0.5
 networks:
-  ntoekhe-network:
+  ntsoekhe-network:
     ipam:
       driver: default
       config:
