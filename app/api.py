@@ -341,7 +341,7 @@ def create_doctor():
         print(f"Error creating doctor: {e}")
         return jsonify({'message': 'Failed to create doctor'}), 500
 
-@api.route('/display/patients', methods=["GET"])
+@api.route(/patients/display', methods=["GET"])
 #@login_required
 def display_patients():
   patients = db_manager.get_all_patients()
