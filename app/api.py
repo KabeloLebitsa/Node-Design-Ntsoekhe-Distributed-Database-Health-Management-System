@@ -9,6 +9,7 @@ from models import Patient, Doctor, Nurse, Department, Appointment, Prescription
 from database import DatabaseManager
 from utils import ReplicationStrategy
 from uuid import uuid4
+from urllib.parse import urlparse
 import logging
 
 api = Blueprint('api', __name__)
@@ -23,13 +24,17 @@ def create_user():
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        request_id = user_data.get('request_id')
-        if request_id is None:
-            request_id = uuid4().hex
-        user_id = db_manager.insert_user(user_data, request_id)        
+        user_id = db_manager.insert_user(user_data)        
+        
         # Replicate the data to other nodes
         user_data['UserID'] = user_id
-        replication_strategy.replicate('insert', user_data.to_dict(), 'user', request_id)
+        request_id = uuid4().hex
+        url = request.url
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.split('/')[0]}"
+        logging.info(f"Base URL: {base_url}")
+        replication_strategy.replicate('insert', user_data, 'user', request_id, base_url)
+        
         logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
@@ -57,15 +62,16 @@ def create_patient():
     ]:
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
-    try:
-        request_id = patient_data.get('request_id')
-        if request_id is None:
-            request_id = uuid4().hex
-        patient_id = db_manager.insert_patient(patient_data, request_id)
-        
+    try: 
+        patient_id = db_manager.insert_patient(patient_data)
         # Replicate the data to other nodes
         patient_data['PatientID'] = patient_id
-        replication_strategy.replicate('insert', patient_data.to_dict(), 'patient', request_id)
+        request_id = uuid4().hex
+        url = request.url
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path.split('/')[0]}"
+
+        replication_strategy.replicate('insert', patient_data, 'patient', request_id, base_url)
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
@@ -165,7 +171,7 @@ def search_patients():
         patients = conn.query(Patient).filter(Patient.Name.ilike(f'%{query}%')).all()
     return render_template('display_patients.html', patients=patients)
 
-@api.route('/replicate/<action>/<ObjectType>', methods=['POST'])
+@api.route('/replicate', methods=['POST'])
 #@login_required
 def handle_replicate():
     try:
@@ -174,12 +180,13 @@ def handle_replicate():
             logging.warning("No data provided in the request")
             return jsonify({'message': 'No data provided'}), 400
 
-        action = data.get('action')
-        object_type = data.get('object_type')
-        db_data = data.get('data')
+        action = data.pop('action', None)
+        object_type = data.pop('object_type', None)
+        db_data = data.pop('data', None)
+        request_id = data.pop('request_id', None)
 
         if not db_data:
-            logging.warning("Missing data to process for action: {action}, object_type: {object_type}")
+            logging.warning(f"Missing data to process for action: {action}, object_type: {object_type}")
             return jsonify({'message': 'Missing data to process'}), 400
 
         logging.info(f"Processing action {action} for object_type {object_type}")
@@ -200,7 +207,7 @@ def handle_replicate():
                 'delete': db_manager.delete_doctor,
             },
         }
-        request_id = data.get('request_id')
+
         action_method = action_method_map.get(object_type, {}).get(action)
         if not action_method:
             logging.error(f"Unsupported action-object type combination: {action} with {object_type}")

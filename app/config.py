@@ -7,9 +7,11 @@ class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
     SECRET_KEY = os.urandom(32)
     SQLALCHEMY_TRACK_MODIFICATIONS = False       
-    REQUEST_CACHE_EXPIRY_SECONDS = 300  
-    REPLICATION_NODES = [
-        'http://127.0.0.1:8081',
+    REQUEST_CACHE_EXPIRY_SECONDS = 300 
+    DATA_DIR = "data" 
+    CURRENT_NODE = os.environ.get('CURRENT_NODE', 'http://default-node-url:port')
+    NODES = [
+        'http://172.0.0.1:8081',
         'http://172.0.0.2:8082',
         'http://172.0.0.3:8083',
         'http://172.0.0.4:8084',

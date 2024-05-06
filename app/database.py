@@ -70,7 +70,7 @@ class DatabaseManager:
         with self.get_db() as db:
             return db.query(User).get(user_id)
 
-    def insert_user(self, user, request_id):
+    def insert_user(self, user):
         with self.get_db() as db:
             try:
                 if db.query(User).filter(User.Username == user['Username']).one_or_none():
