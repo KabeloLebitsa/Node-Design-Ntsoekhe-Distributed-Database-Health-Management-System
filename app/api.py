@@ -7,10 +7,13 @@ from flask_login import login_required, current_user
 from exceptions import PatientDeletionError, PatientNotFoundException, InvalidRequestException, DatabaseIntegrityError, InternalServerError
 from models import Patient, Doctor, Nurse, Department, Appointment, Prescription, Billing, User
 from database import DatabaseManager
+from utils import ReplicationStrategy
+from uuid import uuid4
 import logging
 
 api = Blueprint('api', __name__)
 db_manager = DatabaseManager()
+replication_strategy = ReplicationStrategy()
 
 # Endpoint for creating a user
 @api.route('/users', methods=['POST'])
@@ -20,7 +23,13 @@ def create_user():
     if not user_data:
         return jsonify({'message': 'Missing user data'}), 400
     try:
-        user_id = db_manager.insert_user(user_data, request_id=None)
+        request_id = user_data.get('request_id')
+        if request_id is None:
+            request_id = uuid4().hex
+        user_id = db_manager.insert_user(user_data, request_id)        
+        # Replicate the data to other nodes
+        user_data['UserID'] = user_id
+        replication_strategy.replicate('insert', user_data.to_dict(), 'user', request_id)
         logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
     except InvalidRequestException as e:
@@ -49,7 +58,14 @@ def create_patient():
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
-        db_manager.insert_patient(patient_data, request_id=None)
+        request_id = patient_data.get('request_id')
+        if request_id is None:
+            request_id = uuid4().hex
+        patient_id = db_manager.insert_patient(patient_data, request_id)
+        
+        # Replicate the data to other nodes
+        patient_data['PatientID'] = patient_id
+        replication_strategy.replicate('insert', patient_data.to_dict(), 'patient', request_id)
         return jsonify({'redirect': '/dashboard/admin'}), 201
     except IntegrityError as e:
         return jsonify({'message': 'Failed to create patient (data integrity issue)'}), 500
@@ -191,7 +207,7 @@ def handle_replicate():
             return jsonify({'message': 'Unsupported action-object type combination'}), 400
 
         logging.info(f"Executing {action} for {object_type} with request ID {request_id}")
-        action_method(db_data, request_id)  # Call the appropriate database method
+        action_method(db_data)  # Call the appropriate database method
 
         logging.info(f"{object_type} {action}d successfully")
         return jsonify({'message': f'{object_type} {action}d successfully'}), 201

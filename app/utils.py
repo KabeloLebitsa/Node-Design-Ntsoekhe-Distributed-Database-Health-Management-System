@@ -4,6 +4,7 @@ import logging
 import requests
 from abc import ABC, abstractmethod
 import json
+import redis
 from flask import json
 from config import Config
 
@@ -12,6 +13,7 @@ class ReplicationStrategy(ABC):
     def __init__(self) -> None:
         self.message_queue_url = Config.REPLICATION_NODES
         self.processed_requests = set()  # Track processed request IDs
+        self.redis_client = redis.Redis(host='172.0.0.10', port=6379)  # Configure as needed
 
 
     @abstractmethod
@@ -41,11 +43,13 @@ class ReplicationStrategy(ABC):
             logging.error("Missing request_id in message data")
             return False
 
-        if message_id in self.processed_requests:
+        # Check for duplicate request using Redis
+        if self.redis_client.sismember('processed_requests', message_id):
             logging.info(f"Ignoring duplicate request {message_id}")
             return False
 
-        self.processed_requests.add(message_id)
+        # Add to Redis set
+        self.redis_client.sadd('processed_requests', message_id)
 
         success = True
         for url in self.message_queue_url:

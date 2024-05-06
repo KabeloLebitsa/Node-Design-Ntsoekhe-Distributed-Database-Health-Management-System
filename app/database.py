@@ -5,36 +5,17 @@ import requests
 import socket
 import random
 import logging
-from utils import ReplicationStrategy
 from sqlite3 import IntegrityError
 from flask import json, jsonify
 from config import Config
-from uuid import uuid4
 from flask_login import login_user
 from contextlib import contextmanager
 from sqlalchemy import create_engine, Table, Column, MetaData, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker
 from models import Base, Patient, Doctor, User, Prescription, Appointment, Department
 from exceptions import DatabaseIntegrityError, ValueError, TypeError
-
-
-
 import hashlib
 
-def hash_password(password):
-        # Encode the password string to bytes
-    password_bytes = password.encode('utf-8')
-
-        # Create a SHA-256 hash object
-    hash_object = hashlib.sha256()
-
-        # Update the hash object with the password bytes
-    hash_object.update(password_bytes)
-
-        # Get the hexadecimal representation of the hash
-    hashed_password = hash_object.hexdigest()
-
-    return hashed_password
    
 # Database manager class
 class DatabaseManager:
@@ -42,7 +23,6 @@ class DatabaseManager:
         self.DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
         self.NODE_ID = socket.gethostname()
         self.engine = create_engine(self.DATABASE_URL)
-        self.replication_strategy = ReplicationStrategy()
         
     def create_tables(self):
         Base.metadata.create_all(self.engine)
@@ -58,6 +38,13 @@ class DatabaseManager:
             yield db
         finally:
             db.close()
+    def hash_password(self, password):
+        password_bytes = password.encode('utf-8')
+        hash_object = hashlib.sha256()
+        hash_object.update(password_bytes)
+        hashed_password = hash_object.hexdigest()
+
+        return hashed_password
             
     def ensure_admin_user(self):
         with self.get_db() as db:
@@ -91,20 +78,12 @@ class DatabaseManager:
                     return jsonify({'error': 'Username already exists'}), 400
                 user_id = user.get('UserID') or self.generate_user_id(user['Role'])
                 username = user['Username']
-                
-                hashed_password = hash_password(user['Password'])
-                password = hashed_password
+                password = self.hash_password(user['Password'])
                 
                 role = user['Role']
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
-                db.commit()
-                
-                # Replicate the data to other nodes
-                if request_id is None:
-                    request_id = uuid4().hex
-                self.replication_strategy.replicate('insert', new_user.to_dict(), 'user', request_id)
-                
+                db.commit()                
                 logging.info(f"User inserted successfully. ID: {new_user.UserID}")
                 return new_user.UserID
             except Exception as e:
@@ -122,10 +101,6 @@ class DatabaseManager:
                 new_patient = Patient(patient_id, name, date_of_birth, gender, phone_number)
                 db.add(new_patient)
                 db.commit()
-                # Replicate the data to other nodes
-                if request_id is None:
-                    request_id = uuid4().hex
-                self.replicate_data('insert', new_patient.to_dict(), 'patient', request_id)
                 return new_patient.PatientID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
