@@ -60,7 +60,7 @@ def create_dashboard_route(role):
     return dashboard
 
 @app.route('/user/info')
-#@login_required
+@login_required
 def user_info():
     user_id = current_user.UserID
     with db_manager.get_db() as db:
@@ -91,7 +91,7 @@ def login_page():
 
 # Logout route
 @app.route('/logout')
-#@login_required
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('login_page'))
@@ -103,21 +103,27 @@ app.route('/dashboard/patients')(create_dashboard_route('patient'))
 
 # Create user page route 
 @app.route('/register/users')
+@login_required
 def create_user():
     return render_template('create_user.html')
 
 # Create patients page route 
 @app.route('/register/patients')
+@login_required
 def create_patient():
     return render_template('create_patient.html')
 # Create doctors page route 
 @app.route('/register/doctors')
+@login_required
 def create_doctor():
     return render_template('create_doctor.html')
 # Create prescription page route 
 @app.route('/insert/prescriptions')
+@login_required
 def create_prescription():
     return render_template('create_prescription.html')
+
+
 # Main function
 if __name__ == '__main__':
     debug_mode = app_config.DEBUG

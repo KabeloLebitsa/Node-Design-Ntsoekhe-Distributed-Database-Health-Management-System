@@ -45,13 +45,14 @@
       background: #bbb;
     }
   </style>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 <body>
   <h1>Create New Prescription</h1>
   <form id="CreatePrescriptionForm">
     <h3>Patient Information</h3>
     <select id="PatientID" required>
-      <option value="" disabled selected>Select Patient</option>
     </select>
 
     <h3>Prescription Details</h3>
@@ -76,29 +77,61 @@
   </form>
   <script>
     document.getElementById('CreatePrescriptionForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const formData = {
-                drug: document.getElementById('drug').value,
-                dosage: document.getElementById('dosage').value,
-                patientId: document.getElementById('patientId').value
-            };
+          event.preventDefault();
+          
+          const formData = {
+            PatientID: document.getElementById('PatientID').value,
+              Medication: document.getElementById('MedicationName').value,
+              Dosage: document.getElementById('Dosage').value + ' ' + document.getElementById('DosageUnit').value,
+              PatientId: document.getElementById('PatientID').value,
+              Frequency: document.getElementById('Frequency').value + ' ' + document.getElementById('FrequencyUnit').value,
+              Refills: document.getElementById('Refills').value,
+              Instructions: document.getElementById('Instructions').value
+          };
+          $(document).ready(function() {
+            fetch('/patients')
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Error loading patients');
+                }
+                return response.json();
+              })
+              .then(data => {
+                const patientSelect = $('#PatientID');
+                patientSelect.empty(); // Clear existing options 
 
-            fetch('/prescriptions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Prescription added successfully: ' + JSON.stringify(data));
-            })
-            .catch(error => {
-                alert('Error adding prescription: ' + error);
-            });
-        });  
+                data.forEach(patient => {
+                  const option = new Option(patient.Name, patient.PatientID, false, false);
+                  patientSelect.append(option);
+                });
+                patientSelect.select2({
+                  placeholder: "Select Patient",
+                  allowClear: true
+                });
+              })
+              .catch(error => console.error('Error loading patients:', error));
+          });
+
+          fetch('/prescriptions', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData)
+          })
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Error adding prescription');
+              }
+              return response.json();
+          })
+          .then(data => {
+              alert('Prescription added successfully: ' + JSON.stringify(data));
+          })
+          .catch(error => {
+              alert('Error adding prescription: ' + error);
+          });
+      });  
     </script>
 </body>
 </html>

@@ -98,12 +98,12 @@
       <h2>Doctor Dashboard</h2>
       <ul>
         <li><a href="/appointments/manage">Manage Appointments</a></li>
-        <li><a href="/prescriptions/create">Create Prescription</a></li>
+        <li><a href="/insert/prescriptions">Create Prescription</a></li>
         <li><a href="/patients/history">View Patient History</a></li>
       </ul>
     </div>
     <div class="content">
-      <h1>Welcome Dr. <script>document.write(getDoctorName())</script></h1>
+      <h1>Welcome Dr. <script>document.getElementById('doctorName').textContent = await getDoctorName()</script></h1>
       <p>Manage your patients and appointments efficiently.</p>
       <section class="appointments">
         <h2>Upcoming Appointments</h2>
@@ -122,7 +122,6 @@
       try {
         const response = await fetch("/doctor/name", {
           method: "GET",
-          // Add headers for authentication if needed (e.g., authorization token)
         });
         if (!response.ok) {
           throw new Error(`Error fetching doctor name: ${response.statusText}`);
@@ -139,7 +138,9 @@
       try {
         const response = await fetch("/appointments/", {
           method: "GET",
-          // Add headers for authentication if needed
+          headers: {
+            "Authorization": "Bearer <token>"
+          }
         });
         if (!response.ok) {
           throw new Error(`Error fetching appointments: ${response.statusText}`);
@@ -156,7 +157,9 @@
       try {
         const response = await fetch("/patients/", {
           method: "GET",
-          // Add headers for authentication if needed
+          headers: {
+            "Authorization": "Bearer <token>"
+          }
         });
         if (!response.ok) {
           throw new Error(`Error fetching recent patients: ${response.statusText}`);
@@ -169,25 +172,30 @@
       }
     }
 
-    (async () => {
-      const appointments = await getUpcomingAppointments();
-      const patients = await getRecentPatients();
-
-      // Display appointments
+    async function displayAppointments(appointments) {
       const appointmentList = document.querySelector(".appointments ul");
       appointments.forEach(appointment => {
         const listItem = document.createElement("li");
         listItem.textContent = `${appointment.patientName} - ${appointment.dateTime}`;
         appointmentList.appendChild(listItem);
       });
+    }
 
-      // Display patients
+    async function displayPatients(patients) {
       const patientList = document.querySelector(".recent-patients ul");
       patients.forEach(patient => {
         const listItem = document.createElement("li");
         listItem.textContent = patient.name; // Assuming 'name' property in patient object
         patientList.appendChild(listItem);
       });
+    }
+
+    (async () => {
+      const appointments = await getUpcomingAppointments();
+      const patients = await getRecentPatients();
+
+      await displayAppointments(appointments);
+      await displayPatients(patients);
     })();
   </script>
 </body>

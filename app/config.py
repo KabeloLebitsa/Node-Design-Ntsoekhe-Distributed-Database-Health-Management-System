@@ -5,7 +5,7 @@ import logging
 
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///data/ntsoekhe.db"
-    SECRET_KEY = os.urandom(32)
+    #SECRET_KEY = os.urandom(32)
     SQLALCHEMY_TRACK_MODIFICATIONS = False       
     REQUEST_CACHE_EXPIRY_SECONDS = 300 
     DATA_DIR = "data" 

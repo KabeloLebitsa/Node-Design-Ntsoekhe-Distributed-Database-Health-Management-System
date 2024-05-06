@@ -1,12 +1,11 @@
 # database.py
 
 from dateutil.parser import parse
-import requests
 import socket
 import random
 import logging
 from sqlite3 import IntegrityError
-from flask import json, jsonify
+from flask import jsonify
 from config import Config
 from flask_login import login_user
 from contextlib import contextmanager
@@ -39,10 +38,16 @@ class DatabaseManager:
         finally:
             db.close()
     def hash_password(self, password):
-        password_bytes = password.encode('utf-8')
-        hash_object = hashlib.sha256()
-        hash_object.update(password_bytes)
-        return hash_object.hexdigest()
+        try:
+            if password is None or password == '':
+                return None
+            password_bytes = password.encode('utf-8')
+            hash_object = hashlib.sha256()
+            hash_object.update(password_bytes)
+            return hash_object.digest()
+        except Exception as e:
+            print(f"Error occurred during password hashing: {e}")
+            return None
             
     def ensure_admin_user(self):
         with self.get_db() as db:
@@ -184,8 +189,14 @@ class DatabaseManager:
         db.commit()
 
     def get_all_patients(self):
-        with self.get_db() as db:
-            return db.query(Patient).all()
+        try:
+            with self.get_db() as db:
+                patients = db.query(Patient).all()
+            logging.info("End get_all_patients")
+            return [patient.to_dict() for patient in patients]
+        except Exception as e:
+            logging.error(f"Error occurred during getting all patients: {e}")
+            return []
 
     def get_patient_by_id(self, patient_id):
         if patient_id is None:
@@ -216,7 +227,22 @@ class DatabaseManager:
 
     def get_all_doctors(self):
         with self.get_db() as db:
-            return db.query(Doctor).all()
+            doctors = db.query(Doctor, Department.DepartmentName).join(Department, Doctor.DepartmentID == Department.DepartmentID).all()
+            if not doctors:
+                logging.info("No doctors found.")
+                return "No doctors found."
+            logging.info(f"Retrieved {len(doctors)} doctors from the database.")
+            serialized_doctors = []
+            for doctor, department_name in doctors:
+                serialized_doctor = {
+                    'DoctorID': doctor.DoctorID,
+                    'Name': doctor.Name,
+                    'Specialization': doctor.Specialization,
+                    'PhoneNumber': doctor.PhoneNumber,
+                    'DepartmentName': department_name
+                }
+                serialized_doctors.append(serialized_doctor)
+            return serialized_doctors
 
     def get_doctor_by_id(self, doctor_id):
         with self.get_db() as db:
@@ -248,20 +274,7 @@ class DatabaseManager:
         except Exception as e:
             print(f"Error occurred during authentication: {e}")
             return jsonify({'Error': str(e)}), 500
-
-
-  
-    def replicate_data(self, action, data, ObjectType):
-        for node in self.NODES:
-            if node != self.NODE_ID:
-                try:
-                    url = f"https://{node}/replicate/{action}/{ObjectType}"
-                    data_with_type = {'data': data, 'ObjectType': ObjectType}
-                    response = requests.post(url, json=data_with_type)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    return jsonify({"error": f"Error replicating data to node {node}: {str(e)}"}), 500
-                
+                   
     def insert_prescription(self, prescription):
         with self.get_db() as db:
             try:

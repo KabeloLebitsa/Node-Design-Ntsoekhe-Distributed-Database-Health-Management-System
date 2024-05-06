@@ -17,7 +17,7 @@ replication_strategy = ReplicationStrategy()
 
 #USER MANAGEMENT
 @api.route('/users', methods=['POST'])
-#@login_required
+@login_required
 def create_user():
     user_data = request.get_json()
     if not user_data:
@@ -46,7 +46,7 @@ def create_user():
         return jsonify({'message': 'Internal server error'}), 503
 
 @api.route('/replicate', methods=['POST'])
-#@login_required
+@login_required
 def handle_replicate():
     try:
         data = request.get_json()
@@ -99,7 +99,7 @@ def handle_replicate():
 
 #PATIENT MANAGEMENT
 @api.route('/patients', methods=['POST'])
-#@login_required
+@login_required
 def create_patient():
     patient_data = request.get_json()
     required_fields = ["Name", "DateOfBirth", "Gender", "PhoneNumber"]
@@ -123,7 +123,7 @@ def create_patient():
         return jsonify({'message': 'Failed to create patient'}), 500
 
 @api.route('/patients/<int:patient_id>', methods=['GET'])
-#@login_required
+@login_required
 def get_patient_by_id(patient_id):
     if patient := db_manager.get_patient_by_id(patient_id):
         return jsonify(patient.serialize()), 200
@@ -131,7 +131,7 @@ def get_patient_by_id(patient_id):
         return jsonify({'message': f'Patient with ID {patient_id} not found'}), 404
 
 @api.route('/patients/<string:patient_id>', methods=['PUT'])
-#@login_required
+@login_required
 def update_patient(patient_id):
     update_data = request.get_json()
     if not update_data:
@@ -147,7 +147,7 @@ def update_patient(patient_id):
         return jsonify({'message': 'Failed to update patient'}), 500
 
 @api.route('/patients/<string:patient_id>', methods=['DELETE'])
-#@login_required
+@login_required
 def delete_patient(patient_id):  # sourcery skip: do-not-use-bare-except
   try:
     patient = db_manager.get_patient_by_id(patient_id)
@@ -176,13 +176,13 @@ def delete_patient(patient_id):  # sourcery skip: do-not-use-bare-except
 
 
 @api.route('/patients/display', methods=["GET"])
-#@login_required
+@login_required
 def display_patients():
   patients = db_manager.get_all_patients()
   return render_template('display_patients.html', patients=patients)
 
 @api.route('/patients/search', methods=["GET"])
-#@login_required
+@login_required
 def search_patients():
     query = request.args.get('query', '')
     with db_manager.get_db() as conn:
@@ -190,7 +190,7 @@ def search_patients():
     return render_template('display_patients.html', patients=patients)
 
 @api.route("/patients/recent", methods=["GET"])
-#@login_required
+@login_required
 def get_recent_patients():
   doctor_id = current_user.UserID
   appointments = db_manager.get_appointments_by_doctor_id(doctor_id)
@@ -203,10 +203,19 @@ def get_recent_patients():
       recent_patients.append({"name": patient.Name})
 
   return jsonify(recent_patients), 200
+@api.route('/patients')
+@login_required
+def get_patients():
+    try:
+        patients = db_manager.get_all_patients()
+        return jsonify(patients)
+    except Exception as e:
+        logging.error(f'Error retrieving patients: {str(e)}')
+        return jsonify({'error': 'Failed to retrieve patients'}), 500
 
 #DOCTOR MANAGEMENT
 @api.route('/doctors', methods=['POST'])
-#@login_required
+@login_required
 def create_doctor():
     doctor_data = request.get_json()
     required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
@@ -231,7 +240,7 @@ def create_doctor():
         return jsonify({'message': 'Failed to create doctor'}), 505
 
 @api.route('/doctors/search', methods=["GET"])
-#@login_required
+@login_required
 def search_doctors():
     query = request.args.get('query', '')
     with db_manager.get_db() as conn:
@@ -239,13 +248,26 @@ def search_doctors():
     return render_template('display_patients.html', doctors=doctors)
 
 @api.route('/doctors/display', methods=["GET"])
-#@login_required
+@login_required
 def display_doctors():
   doctors = db_manager.get_all_doctors()
   return render_template('display_doctors.html', doctors=doctors)
+
+@api.route('/doctor/name', methods=['GET'])
+@login_required
+def get_doctor_name():
+    try:
+        doctor = db_manager.get_doctor_by_id(current_user.UserID)
+        doctor_name = doctor.Name
+        print(doctor_name)
+        return jsonify({'name': doctor_name}), 200
+    except Exception as e:
+        error_message = f"Error fetching doctor name: {str(e)}"
+        return jsonify({'error': error_message}), 500
     
 #APPOINTMENT AND PRESCRIPTION MANAGEMENT
 @api.route('/prescriptions', methods=['POST'])
+@login_required
 def add_prescription():
     try:
         if hasattr(current_user, 'UserID'):
@@ -269,6 +291,7 @@ def add_prescription():
         return jsonify({'error': str(e)}), 500
     
 @api.route("/appointments/upcoming", methods=["GET"])
+@login_required
 def get_upcoming_appointments():
   doctor_id = current_user.UserID  # Get the doctor's ID
   appointments = db_manager.get_all_appointments()
