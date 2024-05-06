@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Patient</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+    }
+
+    h1, h3 {
+        color: #333333;
+        margin-bottom: 20px;
+    }
+
+    form {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input, button {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 95%;
+    }
+    select {
+        padding: 10px;
+        margin-top: 8px;
+        font-size: 17px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        display: block;
+        width: 15%;
+    }
+
+    button {
+        cursor: pointer;
+        background: #ddd;
+    }
+
+    button:hover {
+        background: #bbb;
+    }
+  </style>
+</head>
+<body>
+        <h1>Create New Patient</h1>
+        <form id="CreatePatientForm">
+    <h3>Personal Information</h3>
+    <input type="text" id="Name" placeholder="Full Name" required>
+    <input type="date" id="DateOfBirth" placeholder="Date of Birth" required>
+    <select id="Gender" required>
+      <option value="" disabled selected>Select Gender</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+    <input type="tel" id="PhoneNumber" placeholder="Phone Number" required>
+    <h3>Login Information</h3>
+    <input type="text" id="Username" placeholder="Username" required>
+    <input type="password" id="Password" placeholder="Password" required>
+    <button type="submit">Create Patient</button>
+        </form>
+        <script>
+            document.getElementById("CreatePatientForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Basic validation
+            const Name = document.getElementById("Name").value.trim();
+            const DateOfBirth = document.getElementById("DateOfBirth").value;
+            const Gender = document.getElementById("Gender").value;
+            const PhoneNumber = document.getElementById("PhoneNumber").value;
+            const Username = document.getElementById("Username").value.trim();
+            const Password = document.getElementById("Password").value;
+
+            if (!Name || !DateOfBirth || !Gender || !PhoneNumber || !Username || !Password) {
+                alert("Please fill out all required fields");
+                return;
+            }
+
+            // Create user first
+            fetch("/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ Username, Password, Role: "patient" })
+            })
+            .then(response => response.json())
+            .then(userData => {
+                if (userData.error) {
+                    alert(userData.error);
+                } else {
+                    // User creation successful
+                    alert("User created successfully!"); // Provide feedback to the user
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating user: ' + error);
+            });
+            });
+        </script>
+</body>
+</html>
+
