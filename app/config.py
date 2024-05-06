@@ -9,7 +9,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False       
     REQUEST_CACHE_EXPIRY_SECONDS = 300 
     DATA_DIR = "data" 
-    CURRENT_NODE = os.environ.get('CURRENT_NODE', 'http://default-node-url:port')
     NODES = [
         'http://172.0.0.1:8081',
         'http://172.0.0.2:8082',

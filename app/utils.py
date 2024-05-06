@@ -32,7 +32,7 @@ class ReplicationStrategy(ABC):
     def send_message(self, data: str) -> None:
         pass
 
-    def replicate(self, action: str, data: str, object_type: str, request_id: str, base_url: str) -> None:
+    def replicate(self, action: str, data: str, object_type: str, request_id: str) -> None:
         """
         Replicates an operation to message queue nodes.
         Validates data, checks for duplicates, and sends the message.
@@ -52,7 +52,7 @@ class ReplicationStrategy(ABC):
             logging.error(f"Error validating message data: {e}")
             return
 
-        self.send_message(json.dumps(message), base_url)
+        self.send_message(json.dumps(message))
         logging.info(f"Replicated {action} operation for {object_type}: {data} (Request ID: {request_id})")
 
     def _validate_message_data(self, message: dict) -> None:
@@ -62,8 +62,7 @@ class ReplicationStrategy(ABC):
         """
 
         required_fields = {"action", "data", "object_type", "request_id"}
-        missing_fields = required_fields - set(message.keys())
-        if missing_fields:
+        if missing_fields := required_fields - set(message.keys()):
             raise ValueError(f"Missing required fields in message: {', '.join(missing_fields)}")
 
         # Add type checks for data and object_type
@@ -72,7 +71,7 @@ class ReplicationStrategy(ABC):
         #if not isinstance(message['object_type'], str):
         #    raise ValueError("Invalid data type for 'object_type'")
 
-    def send_message(self, data: str, base_url: str) -> bool:
+    def send_message(self, data: str) -> bool:
         """
         Sends the message to all message queue nodes, handling potential errors.
         Checks for duplicates, updates the set, and saves data after successful processing.
@@ -91,19 +90,18 @@ class ReplicationStrategy(ABC):
             self.processed_requests.add(message_id)
 
             success = True
-            for url in self.message_queue_url:
-                if url != base_url:   
-                    modified_url = f"{url}/replicate"
-                    try:
-                        response = requests.post(modified_url, data=data, headers=headers)
-                        response.raise_for_status()  # Raise exception for non-2xx status codes
-                        logging.info(f"Successfully sent message to {url}")
-                    except requests.exceptions.RequestException as e:
-                        logging.error(f"Error sending message to {url}: {e}")
-                        success = False
+            for url in self.message_queue_url:  
+                modified_url = f"{url}/replicate"
+                try:
+                    response = requests.post(modified_url, data=data, headers=headers)
+                    response.raise_for_status()  # Raise exception for non-2xx status codes
+                    logging.info(f"Successfully sent message to {url}")
+                except requests.exceptions.RequestException as e:
+                    logging.error(f"Error sending message to {url}: {e}")
+                    success = False
 
-                if success:
-                    self._save_data()
+            if success:
+                self._save_data()
 
         except (json.JSONDecodeError, ValueError) as e:
             logging.error(f"Error processing request: {e}")

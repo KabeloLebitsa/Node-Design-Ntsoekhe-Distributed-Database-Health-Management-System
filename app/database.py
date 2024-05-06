@@ -42,9 +42,7 @@ class DatabaseManager:
         password_bytes = password.encode('utf-8')
         hash_object = hashlib.sha256()
         hash_object.update(password_bytes)
-        hashed_password = hash_object.hexdigest()
-
-        return hashed_password
+        return hash_object.hexdigest()
             
     def ensure_admin_user(self):
         with self.get_db() as db:
@@ -111,21 +109,32 @@ class DatabaseManager:
             except Exception as e:
                 raise Exception(f"Error creating patient: {str(e)}") from e
                 
-    def insert_doctor(self, new_doctor):
+
+    def insert_doctor(self, doctor_data):
         with self.get_db() as db:
             try:
+                department_id = db.query(Department.DepartmentID).filter(Department.DepartmentName == doctor_data['DepartmentName']).scalar()
+                new_doctor = Doctor(
+                    doctor_id=doctor_data.get('DoctorID'),
+                    name=doctor_data.get('DoctorName'),
+                    specialization=doctor_data.get('Specialization'),
+                    phone_number=doctor_data.get('PhoneNumber'),
+                    department_id=department_id
+                )
                 db.add(new_doctor)
                 db.commit()
-                print("Start")
+                logging.info(f"Doctor inserted successfully with ID: {new_doctor.DoctorID}")
                 return new_doctor.DoctorID
             except IntegrityError as e:
-                raise DatabaseIntegrityError(
-                    f"Error creating doctor (data integrity): {e}"
-                ) from e
+                logging.error(f"Error creating doctor (data integrity): {e}")
+                raise DatabaseIntegrityError(f"Error creating doctor (data integrity): {e}") from e
             except ValueError as e:
+                logging.error(f"Error creating doctor: {str(e)}")
                 raise ValueError(f"Error creating doctor: {str(e)}") from e
             except Exception as e:
+                logging.error(f"Error creating doctor: {str(e)}")
                 raise Exception(f"Error creating doctor: {str(e)}") from e
+
 
     def delete_patient(self, patient_id):
         try:
