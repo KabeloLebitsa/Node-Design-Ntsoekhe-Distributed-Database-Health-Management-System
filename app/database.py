@@ -82,12 +82,6 @@ class DatabaseManager:
                 new_user = User(user_id, username, password, role)
                 db.add(new_user)
                 db.commit()
-                
-                # Replicate the data to other nodes
-                # if request_id is None:
-                #     request_id = uuid4().hex
-                # self.replication_strategy.replicate('insert', new_user.to_dict(), 'user', request_id)
-                
                 logging.info(f"User inserted successfully. ID: {new_user.UserID}")
                 return new_user.UserID
             except Exception as e:
@@ -105,11 +99,8 @@ class DatabaseManager:
                 new_patient = Patient(patient_id, name, date_of_birth, gender, phone_number)
                 db.add(new_patient)
                 db.commit()
-                # Replicate the data to other nodes
-                # if request_id is None:
-                #     request_id = uuid4().hex
-                # self.replicate_data('insert', new_patient.to_dict(), 'patient', request_id)
-                # return new_patient.PatientID
+                logging.info(f"Patient inserted successfully. ID: {new_patient.PatientID}")
+                return new_patient.PatientID
             except IntegrityError as e:
                 raise DatabaseIntegrityError(
                     f"Error creating patient (data integrity): {e}"
@@ -214,11 +205,6 @@ class DatabaseManager:
             except Exception as e:
                 print(f'Error occurred during get patient by id: {e}')
                 return jsonify({"error": str(e)}), 500
-
-    def insert_doctor(self, doctor):
-        with self.get_db() as db:
-            db.add(doctor)
-        db.commit()
 
     def update_doctor(self, doctor_id, new_data):
         with self.get_db() as db:

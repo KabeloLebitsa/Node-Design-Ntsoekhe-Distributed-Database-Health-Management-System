@@ -99,8 +99,8 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Date of Birth</th>
-                <th>Gender</th>
+                <th>Specialization</th>
+                <th>Department ID</th>
                 <th>Contact Information</th>
                 <th>Actions</th>
             </tr>
@@ -109,8 +109,8 @@
             {% for doctor in doctors %}
             <tr>
                 <td>{{ doctor.Name }}</td>
-                <td>{{ doctor.DateOfBirth }}</td>
-                <td>{{ doctor.Gender }}</td>
+                <td>{{ doctor.Specialization }}</td>
+                <td>{{ doctor.DepartmentID }}</td>
                 <td>{{ doctor.PhoneNumber }}</td>
                 <td>
                     <a href="/doctors/update/{{ doctor.DoctorID }}" class="action-link update-link">Update</a> |

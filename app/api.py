@@ -26,9 +26,9 @@ def create_user():
         user_id = db_manager.insert_user(user_data)        
         
         # Replicate the data to other nodes
-        user_data['UserID'] = user_id
+        '''user_data['UserID'] = user_id
         request_id = uuid4().hex
-        replication_strategy.replicate('insert', user_data, 'user', request_id)
+        replication_strategy.replicate('insert', user_data, 'user', request_id)'''
         
         logging.info(f"User created successfully. ID: {user_id}")
         return jsonify({'UserID': user_id}), 201
@@ -211,16 +211,18 @@ def create_doctor():
     doctor_data = request.get_json()
     required_fields = ["DoctorName", "Specialization", "PhoneNumber", "DepartmentName"]
     
-    if any(field not in doctor_data for field in required_fields):
-        logging.warning(f'Missing required fields: {", ".join(required_fields)}')
-        return jsonify({'message': f'Missing required fields: {", ".join(required_fields)}'}), 400
+    if missing_fields := [
+        field for field in required_fields if field not in doctor_data
+    ]:
+        logging.warning(f'Missing required fields: {", ".join(missing_fields)}')
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
     try:
         doctor_id = db_manager.insert_doctor(doctor_data)
         # Replicate the data to other nodes
-        doctor_data.update({'DoctorID': doctor_id})
+        '''doctor_data.update({'DoctorID': doctor_id})
         request_id = uuid4().hex
-        replication_strategy.replicate('insert', doctor_data, 'doctor', request_id)
+        replication_strategy.replicate('insert', doctor_data, 'doctor', request_id)'''
         logging.info(f'Doctor created with ID: {doctor_id}')
         return jsonify({'redirect': '/dashboard/admin', 'doctor_id': doctor_id}), 201
 
