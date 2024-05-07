@@ -4,6 +4,7 @@ from dateutil.parser import parse
 import socket
 import random
 import logging
+import sqlalchemy
 from sqlite3 import IntegrityError
 from flask import jsonify
 from config import Config
@@ -311,3 +312,15 @@ class DatabaseManager:
         with self.get_db() as db:
             return db.query(Appointment).filter(Appointment.DoctorID == doctor_id).all()
                 
+    def create_table(self, table_name, columns):
+        engine = self.engine
+        metadata = MetaData()
+        columns = [Column(column_name, getattr(sqlalchemy, data_type)()) for column_name, data_type in columns.items()]
+        table = Table(table_name, metadata, *columns)
+        metadata.create_all(engine, tables=[table])
+        
+    def drop_table(self, table_name):
+        engine = self.engine
+        metadata = MetaData()
+        table = Table(table_name, metadata, autoload_with=engine)
+        table.drop(engine)
